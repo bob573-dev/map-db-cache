@@ -33,8 +33,8 @@ class MBTilesDbCache(EventDispatcher):
     progress = ListProperty([0,0])
     approximate_size_mb = NumericProperty(0)
     approximate_size_max_sample_count = NumericProperty(20)
-    time_to_download = NumericProperty(MAX_DOWNLOAD_TIME)
-    time_to_download_averaging_period_s = NumericProperty(3)
+    time_to_download = NumericProperty(0)
+    time_to_download_averaging_period_s = NumericProperty(2)
     __events__ = ['on_success', 'on_error', 'on_connection_lost', 'on_finish']
 
     def __init__(self, *args, **kwargs):
@@ -128,7 +128,7 @@ class MBTilesDbCache(EventDispatcher):
 
     def _handle_input_change(self, *_):
         self.approximate_size_mb = 0
-        self.time_to_download = MAX_DOWNLOAD_TIME
+        self.time_to_download = 0
         self._trigger_update_approximate_size()
 
     def _handle_approximate_size_mb(self, *_):

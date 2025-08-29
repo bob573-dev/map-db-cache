@@ -56,7 +56,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
     downloading = BooleanProperty(False)
     progress = ListProperty([0,0])
     approximate_size_mb = NumericProperty(0)
-    time_to_download = NumericProperty(MAX_DOWNLOAD_TIME)
+    time_to_download = NumericProperty(0)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -623,6 +623,8 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
         time_label = LabelAutoresized(size_hint_x=1)
         def update_time_label_text(*_):
             if self.time_to_download == MAX_DOWNLOAD_TIME:
+                formated_time = '∞'
+            elif self.time_to_download == 0:
                 formated_time = '__m __s'
             else:
                 formated_time = format_seconds(self.time_to_download)

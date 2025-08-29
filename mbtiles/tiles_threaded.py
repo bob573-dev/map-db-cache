@@ -20,7 +20,8 @@ class MBTilesBuilderThreaded(MBTilesBuilder):
             wait_connection = True,
             **kwargs
     ):
-        kwargs.setdefault('download_retries', 0)
+        if wait_connection:
+            kwargs.setdefault('download_retries', 1)
         super().__init__(**kwargs)
         self._progress_cb = progress_cb
         self._success_cb = success_cb
@@ -81,11 +82,7 @@ class MBTilesBuilderThreaded(MBTilesBuilder):
                 return result
             except DownloadError as exc:
                 self._call_connection_lost_cb_once()
-                if (
-                        not self.wait_connection
-                        or exc.status_code is not None
-                        or not run_process
-                ):
+                if not self.wait_connection or not run_process:
                     raise exc
             if sleeptime < DEFAULT_CONNECTION_MAX_TIMEOUT:
                 sleeptime += 1
