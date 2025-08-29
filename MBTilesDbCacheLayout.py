@@ -28,7 +28,7 @@ from tools.utils import format_seconds
 from uix import (
     InfoPopup, FileExistsPopup, LabelAutoresized, TextInputCoord,
     TextInputUnderlined, BoxLayoutColored, ColoredLayout, BoxLayoutShort, SwitchButtonColored, ButtonColored,
-    ProviderLabel, ButtonImage
+    ProviderLabel, ButtonImage, LabelValidatedAutoresized
 )
 
 
@@ -572,7 +572,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
         root_container.add_widget(dirselect_layout)
 
         root_container.add_widget(Widget(size_hint_y=None, height=13))
-        filename_label = LabelAutoresized(text='Filename')
+        filename_label = LabelValidatedAutoresized(text='Filename')
         root_container.add_widget(filename_label)
 
         file_basename_input_layout = RelativeLayout(
@@ -598,7 +598,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
                 filename_textinput.text = Path(file_chooser.selected_file).stem
         file_chooser.bind(on_submit=_fill_input_if_file)
 
-        extention_label = LabelAutoresized(text='.mbtiles',
+        extention_label = LabelValidatedAutoresized(text='.mbtiles',
                                            pos_hint={"center_y": 0.4})
 
         filename_textinput.bind(right=lambda i, v: setattr(extention_label, 'x', v))
@@ -607,6 +607,16 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
         extention_label.bind(width=lambda i, v: setattr(filename_textinput, 'width', file_basename_input_layout.width - v))
         file_basename_input_layout.add_widget(filename_textinput)
         file_basename_input_layout.add_widget(extention_label)
+
+        def _update_input_invalid(*_):
+            invalid = bool(not self.downloader.filepath_valid and self.file_basename)
+            filename_textinput.invalid = invalid
+            filename_label.invalid = invalid
+            extention_label.invalid = invalid
+
+        trigger_update_input_invalid = Clock.create_trigger(_update_input_invalid)
+        self.bind(file_basename=trigger_update_input_invalid)
+        self.downloader.bind(filepath_valid=trigger_update_input_invalid)
 
         def format_approximate_size(size_mb):
             return f'Approximate size: {size_mb} MB'

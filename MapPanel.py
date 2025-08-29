@@ -375,10 +375,10 @@ class MapPanel(FloatLayout):
         map_view = self.map_view
         if center_selection:
             self._bindings.bind_item(map_view, 'on_touch_down', self._select_center_on_touch)
-            Logger.debug('Center selection on_touch_downd binded')
+            Logger.debug('Center selection on_touch_down binded')
         else:
             self._bindings.unbind_item(map_view, 'on_touch_down', self._select_center_on_touch)
-            Logger.debug('Center selection on_touch_downd unbinded')
+            Logger.debug('Center selection on_touch_down unbinded')
 
     def _select_center_on_touch(self, _, touch):
         lat_lon = self.map_view.get_latlon_at(*touch.pos)
