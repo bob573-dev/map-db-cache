@@ -51,7 +51,7 @@ PROVIDERS = {
     ),
     'Esri ArcGIS Satellite': ProviderData(
         min_zoom = 0,
-        max_zoom = 19,
+        max_zoom = 18,
         url = 'https://server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
         attribution="© Esri",
         format='image/jpeg',

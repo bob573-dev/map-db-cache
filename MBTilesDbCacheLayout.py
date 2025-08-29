@@ -215,6 +215,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
             url=self.provider_url,
             subdomains=self.subdomains,
             attribution=self.attribution,
+            max_zoom=self.max_zoom,
             size_hint=(0.75, 1),
             zoom=self.zoom,
             side_in_km=self.side,
@@ -228,6 +229,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
             subdomains=_map.setter("subdomains"),
             provider_url=_map.setter("url"),
             attribution=_map.setter("attribution"),
+            max_zoom=_map.setter("max_zoom"),
         )
         return _map
 
