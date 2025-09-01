@@ -22,6 +22,7 @@ def setup():  # should be executed before any kivy import
         maximize = True
 
     _setup_logging(log_level)
+    _setup_mouse()
     _setup_window(maximize)
     _setup_cursor()
 
@@ -39,6 +40,11 @@ def _setup_logging(level):
     root_logger.setLevel(level)
     for handler in root_logger.handlers:
         handler.setLevel(level)
+
+
+def _setup_mouse():
+    from kivy.config import Config
+    Config.set('input', 'mouse', 'mouse,disable_multitouch')
 
 
 def _setup_cursor():
