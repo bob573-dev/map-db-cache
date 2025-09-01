@@ -1,4 +1,5 @@
 import os
+import random
 import sqlite3
 import time
 import requests
@@ -109,6 +110,9 @@ class TileDownloader(TileSource):
         sleeptime = 1
         while r >= 0:
             try:
+                if random.random() > 0.95:
+                    raise requests.exceptions.Timeout('my asdfasdf')
+
                 time.sleep(self.timeout)
                 request = requests.get(url, headers=self.headers)
                 if request.status_code == 200:
@@ -117,7 +121,7 @@ class TileDownloader(TileSource):
                     _("Status code : %s, url : %s") % (request.status_code, url),
                     status_code=request.status_code
                 )
-            except (requests.exceptions.ConnectionError, DownloadError) as e:
+            except (requests.exceptions.ConnectionError, requests.exceptions.Timeout, DownloadError) as e:
                 Logger.debug(_("Download error, retry (%s left). (%s)") % (r, e))
                 r -= 1
                 time.sleep(sleeptime)
