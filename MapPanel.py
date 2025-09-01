@@ -243,6 +243,7 @@ class MapPanel(FloatLayout):
     url = StringProperty()
     subdomains = ListProperty(DEFAULT_TILES_SUBDOMAINS)
     attribution = StringProperty(None, allownone=True)
+    max_zoom = NumericProperty(19)
     zoom = NumericProperty(5)
     markers_size = NumericProperty(30)
     precision = NumericProperty(6)
@@ -279,6 +280,7 @@ class MapPanel(FloatLayout):
             url=self._trigger_update_map,
             attribution=self._trigger_update_map,
             subdomains=self._trigger_update_map,
+            max_zoom=self._trigger_update_map,
             bottom_left_lat=self._trigger_update_bbox,
             bottom_left_lon=self._trigger_update_bbox,
             top_right_lat=self._trigger_update_bbox,
@@ -303,7 +305,12 @@ class MapPanel(FloatLayout):
             lon = map_view.lon
 
         url = QuadKeyUrl.from_url(self.url)
-        self.map_source = MapSource(url=url, attribution=self.attribution, subdomains=self.subdomains)
+        self.map_source = MapSource(
+            url=url,
+            max_zoom=self.max_zoom,
+            attribution=self.attribution,
+            subdomains=self.subdomains,
+        )
         self.set_zoom(self.zoom)
         self.map_view = map_view = MapView(
             map_source=self.map_source,
