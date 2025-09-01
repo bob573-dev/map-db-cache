@@ -1,6 +1,7 @@
 import shutil
 from pathlib import Path
 
+from pathvalidate import is_valid_filepath
 from kivy.logger import Logger
 from kivy.clock import Clock
 from kivy.event import EventDispatcher
@@ -29,6 +30,7 @@ class MBTilesDbCache(EventDispatcher):
     cache = BooleanProperty(True)
     cache_dir = StringProperty(DEFAULT_CACHE_DIR)
     valid = BooleanProperty(False)
+    filepath_valid = BooleanProperty(False)
     downloading = BooleanProperty(False)
     progress = ListProperty([0,0])
     approximate_size_mb = NumericProperty(0)
@@ -146,13 +148,19 @@ class MBTilesDbCache(EventDispatcher):
         self.time_to_download = self.builder.calculate_average_download_time(reset=True)
 
     def _update_valid(self, *_):
-        if None in (self.bbox, self.zoom_from, self.zoom_to, self.filepath) or not self.url:
-            self.valid = False
-            return
-        if not Path(self.filepath).parent.exists():
-            self.valid = False
-            return
-        self.valid = True
+        self.filepath_valid = bool(
+                self.filepath
+                and is_valid_filepath(self.filepath)
+                and (filepath := Path(self.filepath)).name.replace('.mbtiles', '')
+                and filepath.parent.exists()
+                and not '\\' in filepath.name
+                and not '/' in filepath.name
+        )
+        self.valid = bool(
+                self.filepath_valid
+                and not None in (self.bbox, self.zoom_from, self.zoom_to)
+                and self.url
+        )
 
     def download(self, rewrite = False):
         if self.valid:
