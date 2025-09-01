@@ -5,7 +5,7 @@ from kivy_garden.mapview.source import MapSource
 from mbtiles import DEFAULT_TILES_SUBDOMAINS, DEFAULT_TILE_FORMAT, DEFAULT_TIMEOUT
 from tools.utils import current_year
 
-DEFAULT_PROVIDER = 'Google Satellite'
+DEFAULT_PROVIDER = 'Google Hybrid'
 KIVY_USER_AGENT = 'Kivy-garden.mapview'
 BROWSER_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/117.0'
 GOOGLE_TIMEOUT = 0.05
@@ -25,10 +25,18 @@ class ProviderData:
 
 
 PROVIDERS = {
-    "Google Satellite": ProviderData(
+    "Google Hybrid": ProviderData(
         min_zoom=0,
         max_zoom=19,
         url='http://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}&hl=uk',
+        attribution=f'Map data ©{current_year()} Google',
+        subdomains=('0', '1', '2', '3'),
+        timeout=GOOGLE_TIMEOUT,
+    ),
+    "Google Satellite": ProviderData(
+        min_zoom=0,
+        max_zoom=19,
+        url='http://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}&hl=uk',
         attribution=f'Map data ©{current_year()} Google',
         subdomains=('0', '1', '2', '3'),
         timeout=GOOGLE_TIMEOUT,
