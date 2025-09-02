@@ -62,8 +62,6 @@ class DrawersMapLayer(MapLayer):
             pass
         def draw(self):
             pass
-        def unload(self):
-            pass
 
     def __init__(self, **kwargs):
         self._trigger_draw = Clock.create_trigger(self._draw)
@@ -182,7 +180,7 @@ class CenteredAreaDrawer(DrawersMapLayer.LayerDrawer):
     top_right_lat = NumericProperty(None, allownone=True)
     top_right_lon = NumericProperty(None, allownone=True)
     line_width = NumericProperty(1.5)
-    color = ListProperty((.9, 0, 0, .8))
+    color = ListProperty((.9, 0, 0, 1))
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
