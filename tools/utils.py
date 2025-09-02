@@ -1,5 +1,9 @@
+import os, sys
 import csv
 from datetime import datetime, timezone
+
+from pathvalidate import is_valid_filepath
+
 
 def current_year() -> int:
     return datetime.now(timezone.utc).year
@@ -22,3 +26,15 @@ def str_to_list(v, default=None):
 
 def str_to_bool(s):
     return not s.lower() in ('', '0', 'false', 'no', 'off', '-')
+
+def check_filepath_valid(filepath):
+    platform = None
+    if sys.platform.startswith("win"):
+        platform = 'Windows'
+    elif sys.platform.startswith("darwin"):
+        platform = 'macOS'
+    elif sys.platform.startswith("linux"):
+        platform = 'Linux'
+    elif os.name == "posix":
+        platform = 'POSIX'
+    return is_valid_filepath(filepath, platform=platform)

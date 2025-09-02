@@ -1,7 +1,6 @@
 import shutil
 from pathlib import Path
 
-from pathvalidate import is_valid_filepath
 from kivy.logger import Logger
 from kivy.clock import Clock
 from kivy.event import EventDispatcher
@@ -12,6 +11,7 @@ from mbtiles.tiles_threaded import MBTilesBuilderThreaded
 from providers import BROWSER_USER_AGENT
 from tools.binding_manager import BindingManager
 from tools.quadkey_url import QuadKeyUrl
+from tools.utils import check_filepath_valid
 
 
 class MBTilesDbCache(EventDispatcher):
@@ -150,7 +150,7 @@ class MBTilesDbCache(EventDispatcher):
     def _update_valid(self, *_):
         self.filepath_valid = bool(
                 self.filepath
-                and is_valid_filepath(self.filepath)
+                and check_filepath_valid(self.filepath)
                 and (filepath := Path(self.filepath)).name.replace('.mbtiles', '')
                 and filepath.parent.exists()
                 and not '\\' in filepath.name
