@@ -1,5 +1,4 @@
 import os
-import random
 import sqlite3
 import time
 import requests
@@ -110,9 +109,6 @@ class TileDownloader(TileSource):
         sleeptime = 1
         while r >= 0:
             try:
-                if random.random() > 0.95:
-                    raise requests.exceptions.Timeout('my asdfasdf')
-
                 time.sleep(self.timeout)
                 request = requests.get(url, headers=self.headers)
                 if request.status_code == 200:
