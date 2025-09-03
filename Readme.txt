@@ -20,3 +20,5 @@ python preview.py [path_to_file] (DEFAULT='map/map.mbtiles')
 ## Build executable
 # linux
 sh build.sh
+# windows
+build.bat
