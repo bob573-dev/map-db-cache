@@ -10,6 +10,7 @@ python -m PyInstaller ^
     --noconsole ^
     --hidden-import=win32timezone ^
     --add-data "png;png" ^
+    --add-data "locales;locales" ^
     --add-data ".venv\Lib\site-packages\kivy_garden\mapview\icons;kivy_garden/mapview/icons" ^
     main.py
 

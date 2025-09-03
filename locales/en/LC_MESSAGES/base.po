@@ -128,3 +128,9 @@ msgstr ""
 
 msgid "Save a copy"
 msgstr ""
+
+msgid "m"
+msgstr ""
+
+msgid "s"
+msgstr ""

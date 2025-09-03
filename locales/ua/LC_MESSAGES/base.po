@@ -128,3 +128,9 @@ msgstr "Перезаписати"
 
 msgid "Save a copy"
 msgstr "Зберегти копію"
+
+msgid "m"
+msgstr "хв"
+
+msgid "s"
+msgstr "с"

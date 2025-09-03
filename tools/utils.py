@@ -4,6 +4,8 @@ from datetime import datetime, timezone
 
 from pathvalidate import is_valid_filepath
 
+from localization import _
+
 
 def current_year() -> int:
     return datetime.now(timezone.utc).year
@@ -12,8 +14,8 @@ def format_seconds(seconds: int) -> str:
     minutes = int(seconds // 60)
     secs = int(seconds % 60)
     if minutes:
-        return f"{minutes}m {secs}s"
-    return f'{secs}s'
+        return f'{minutes}' + _('m') + f' {secs}' + _('s')
+    return f'{secs}' + _('s')
 
 def minmax(x, minimum, maximum):
     return max(minimum, min(x, maximum))

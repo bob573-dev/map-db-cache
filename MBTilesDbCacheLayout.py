@@ -641,7 +641,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
             if self.time_to_download == MAX_DOWNLOAD_TIME:
                 formated_time = '∞'
             elif self.time_to_download == 0:
-                formated_time = '__m __s'
+                formated_time = '__' + _('m') + '__' + _('s')
             else:
                 formated_time = format_seconds(self.time_to_download)
             if self.downloading:
