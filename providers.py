@@ -67,7 +67,7 @@ PROVIDERS = {
     ),
     "OpenTopoMap": ProviderData(
         min_zoom = 4,
-        max_zoom = 17,
+        max_zoom = 15,
         url = 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
         attribution = '© OpenStreetMap contributors, SRTM | © OpenTopoMap (CC-BY-SA)',
     ),
