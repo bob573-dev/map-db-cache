@@ -1,0 +1,130 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2025-09-03 15:30+0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Your custom"
+msgstr ""
+
+msgid "Map downloading failed"
+msgstr ""
+
+msgid "Map downloading finished successfully"
+msgstr ""
+
+msgid "Please check the input — some fields are empty or invalid"
+msgstr ""
+
+msgid "The specified file already exists."
+msgstr ""
+
+msgid "Do you want to overwrite it or save a new copy?"
+msgstr ""
+
+msgid "REGION (system: WGS84)"
+msgstr ""
+
+msgid "Center coordinates"
+msgstr ""
+
+msgid "Select on map"
+msgstr ""
+
+msgid "Cancel selection"
+msgstr ""
+
+msgid "Latitude"
+msgstr ""
+
+msgid "Longitude"
+msgstr ""
+
+msgid "Side length in km"
+msgstr ""
+
+msgid "Enter side length..."
+msgstr ""
+
+msgid "SOURCE"
+msgstr ""
+
+msgid "Map Tile Source"
+msgstr ""
+
+msgid "Enter Map Tile Source url..."
+msgstr ""
+
+msgid "ZOOM"
+msgstr ""
+
+msgid "Current:"
+msgstr ""
+
+msgid "Max zoom"
+msgstr ""
+
+msgid "zoom level..."
+msgstr ""
+
+msgid "FILE SAVE OPTIONS"
+msgstr ""
+
+msgid "Directory"
+msgstr ""
+
+msgid "Filename"
+msgstr ""
+
+msgid "Approximate size"
+msgstr ""
+
+msgid "Time remaining"
+msgstr ""
+
+msgid "Estimated time"
+msgstr ""
+
+msgid "DOWNLOAD"
+msgstr ""
+
+msgid "STOP"
+msgstr ""
+
+msgid "PAUSE"
+msgstr ""
+
+msgid "RESUME"
+msgstr ""
+
+msgid "Choose directory"
+msgstr ""
+
+msgid "Select"
+msgstr ""
+
+msgid "example"
+msgstr ""
+
+msgid "Make a choice"
+msgstr ""
+
+msgid "Cancel"
+msgstr ""
+
+msgid "Overwrite"
+msgstr ""
+
+msgid "Save a copy"
+msgstr ""

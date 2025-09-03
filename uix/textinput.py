@@ -5,6 +5,7 @@ from kivy.uix.textinput import TextInput
 
 from consts import DEFAULT_LAT, DEFAULT_LON, INPUT_INCREASE_PNG, INPUT_DECREASE_PNG, FONT_SIZE_SMALL, \
     MIN_CENTER_LATITUDE, MAX_CENTER_LONGITUDE, MAX_CENTER_LATITUDE, MIN_CENTER_LONGITUDE, ERROR_COLOR
+from localization import _
 from .button import ButtonImage
 
 
@@ -146,7 +147,7 @@ class TextInputCoord(TextInputRangedUnderlined):
     def __init__(self, is_lat: bool = True, **kwargs):
         kwargs['input_filter'] = kwargs.get('input_filter', 'float')
 
-        kwargs['hint_text'] = kwargs.get('hint_text', f"example: {DEFAULT_LAT if is_lat else DEFAULT_LON}")
+        kwargs['hint_text'] = kwargs.get('hint_text', _('example') + f": {DEFAULT_LAT if is_lat else DEFAULT_LON}")
         kwargs['cursor_color'] = kwargs.get('cursor_color', (0.3, 0.3, 0.3, 1))
         kwargs['min_value'] = kwargs.get('min_value', MIN_CENTER_LATITUDE if is_lat else MIN_CENTER_LONGITUDE)
         kwargs['max_value'] = kwargs.get('max_value', MAX_CENTER_LATITUDE if is_lat else MAX_CENTER_LONGITUDE)

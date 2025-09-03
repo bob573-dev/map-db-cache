@@ -1,0 +1,130 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2025-09-03 15:30+0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Your custom"
+msgstr "Ваше власне"
+
+msgid "Map downloading failed"
+msgstr "Помилка завантаження карти"
+
+msgid "Map downloading finished successfully"
+msgstr "Карту успішно завантажено"
+
+msgid "Please check the input — some fields are empty or invalid"
+msgstr "Перевірте введені дані — деякі поля порожні або некоректні"
+
+msgid "The specified file already exists."
+msgstr "Вказаний файл уже існує."
+
+msgid "Do you want to overwrite it or save a new copy?"
+msgstr "Ви хочете перезаписати його чи зберегти нову копію?"
+
+msgid "REGION (system: WGS84)"
+msgstr "РЕГІОН (система: WGS84)"
+
+msgid "Center coordinates"
+msgstr "Координати центру"
+
+msgid "Select on map"
+msgstr "Вибрати на карті"
+
+msgid "Cancel selection"
+msgstr "Скасувати вибір"
+
+msgid "Latitude"
+msgstr "Широта"
+
+msgid "Longitude"
+msgstr "Довгота"
+
+msgid "Side length in km"
+msgstr "Ширина регіону (км)"
+
+msgid "Enter side length..."
+msgstr "Введіть розмір сторони ..."
+
+msgid "SOURCE"
+msgstr "ДЖЕРЕЛО"
+
+msgid "Map Tile Source"
+msgstr "Джерело карти"
+
+msgid "Enter Map Tile Source url..."
+msgstr "Введіть URL джерела карти..."
+
+msgid "ZOOM"
+msgstr "ДЕТАЛІЗАЦІЯ"
+
+msgid "Current:"
+msgstr "Поточна:"
+
+msgid "Max zoom"
+msgstr "Максимальна деталізація"
+
+msgid "zoom level..."
+msgstr "рівень деталізації..."
+
+msgid "FILE SAVE OPTIONS"
+msgstr "ПАРАМЕТРИ ФАЙЛУ"
+
+msgid "Directory"
+msgstr "Папка"
+
+msgid "Filename"
+msgstr "Назва файлу"
+
+msgid "Approximate size"
+msgstr "Приблизний розмір"
+
+msgid "Time remaining"
+msgstr "Час до завершення"
+
+msgid "Estimated time"
+msgstr "Приблизний час"
+
+msgid "DOWNLOAD"
+msgstr "ЗАВАНТАЖИТИ"
+
+msgid "STOP"
+msgstr "СТОП"
+
+msgid "PAUSE"
+msgstr "ПАУЗА"
+
+msgid "RESUME"
+msgstr "ПРОДОВЖИТИ"
+
+msgid "Choose directory"
+msgstr "Виберіть папку"
+
+msgid "Select"
+msgstr "Вибрати"
+
+msgid "example"
+msgstr "приклад"
+
+msgid "Make a choice"
+msgstr "Зробіть вибір"
+
+msgid "Cancel"
+msgstr "Скасувати"
+
+msgid "Overwrite"
+msgstr "Перезаписати"
+
+msgid "Save a copy"
+msgstr "Зберегти копію"
