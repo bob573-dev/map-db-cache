@@ -33,7 +33,7 @@ msgstr ""
 msgid "Do you want to overwrite it or save a new copy?"
 msgstr ""
 
-msgid "REGION (system: WGS84)"
+msgid "REGION"
 msgstr ""
 
 msgid "Center coordinates"

@@ -281,7 +281,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
         container_layout.add_widget(header_label_background)
 
         header_label = LabelAutoresized(
-            text=_('REGION (system: WGS84)'),
+            text=_('REGION'),
             color=HEADER_TEXT_COLOR,
             font_size=FONT_SIZE_MEDIUM,
         )
@@ -299,7 +299,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
         container_layout.add_widget(choose_on_map_container)
 
         center_label = LabelAutoresized(
-            text=_('Center coordinates'),
+            text=_('Center coordinates') + ' (WGS84)',
             color=(0.1, 0.1, 0.1, 1),
             font_size=FONT_SIZE_MEDIUM,
         )
