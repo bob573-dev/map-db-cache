@@ -20,6 +20,31 @@ from tools.quadkey_url import QuadKeyUrl
 from uix import ButtonImage, BoxLayoutAutoresized
 
 
+class MapViewBounded(MapView):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._trigger_update_displayed_bbox = Clock.create_trigger(self._update_displayed_bbox)
+        self.bind(bbox=self._trigger_update_displayed_bbox)
+
+    def _update_displayed_bbox(self, *args):
+        min_lat, min_lon, max_lat, max_lon = self.bbox
+        precision = 0.001
+        lat = self.lat
+        lon = self.lon
+        if min_lat < MIN_LATITUDE +precision:
+            lat += (max_lat - min_lat) / 60
+        elif max_lat > MAX_LATITUDE -precision:
+            lat -= (max_lat - min_lat) / 60
+        if min_lon < MIN_LONGITUDE +precision:
+            lon += (max_lon - min_lon) / 60
+        elif max_lon > MAX_LONGITUDE -precision:
+            lon -= (max_lon - min_lon) / 60
+        if self.lat != lat or self.lon != lon:
+            self.lat = lat
+            self.lon = lon
+            self.center_on(self.lat, self.lon)
+
+
 class MapMarkerSized(MapMarker):
     marker_size = NumericProperty(30)
 
@@ -241,6 +266,7 @@ class MapPanel(FloatLayout):
     url = StringProperty()
     subdomains = ListProperty(DEFAULT_TILES_SUBDOMAINS)
     attribution = StringProperty(None, allownone=True)
+    min_zoom = NumericProperty(2)
     max_zoom = NumericProperty(19)
     zoom = NumericProperty(5)
     markers_size = NumericProperty(30)
@@ -305,12 +331,13 @@ class MapPanel(FloatLayout):
         url = QuadKeyUrl.from_url(self.url)
         self.map_source = MapSource(
             url=url,
+            min_zoom=self.min_zoom,
             max_zoom=self.max_zoom,
             attribution=self.attribution,
             subdomains=self.subdomains,
         )
         self.set_zoom(self.zoom)
-        self.map_view = map_view = MapView(
+        self.map_view = map_view = MapViewBounded(
             map_source=self.map_source,
             lat=lat, lon=lon,
             zoom=self.zoom,
