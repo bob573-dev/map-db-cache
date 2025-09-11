@@ -1,4 +1,5 @@
 import math
+import time
 
 from kivy.clock import Clock
 from kivy.event import EventDispatcher
@@ -26,7 +27,7 @@ class MapViewBounded(MapView):
         self._trigger_update_displayed_bbox = Clock.create_trigger(self._update_displayed_bbox)
         self.bind(bbox=self._trigger_update_displayed_bbox)
 
-    def _update_displayed_bbox(self, *args):
+    def _update_displayed_bbox(self, *_):
         min_lat, min_lon, max_lat, max_lon = self.bbox
         precision = 0.001
         lat = self.lat
@@ -413,10 +414,14 @@ class MapPanel(FloatLayout):
             Logger.debug('Center selection on_touch_down unbinded')
 
     def _select_center_on_touch(self, _, touch):
-        lat_lon = self.map_view.get_latlon_at(*touch.pos)
-        self.center_lat = round(clamp(lat_lon[0], MIN_CENTER_LATITUDE, MAX_CENTER_LATITUDE), self.precision)
-        self.center_lon = round(clamp(lat_lon[1], MIN_CENTER_LONGITUDE, MAX_CENTER_LONGITUDE), self.precision)
-        self.dispatch('on_center_selected')
+        if (
+            (not 'button' in touch.profile or touch.button == 'left')
+            and self.collide_point(*touch.pos)
+        ):
+            lat_lon = self.map_view.get_latlon_at(*touch.pos)
+            self.center_lat = round(clamp(lat_lon[0], MIN_CENTER_LATITUDE, MAX_CENTER_LATITUDE), self.precision)
+            self.center_lon = round(clamp(lat_lon[1], MIN_CENTER_LONGITUDE, MAX_CENTER_LONGITUDE), self.precision)
+            self.dispatch('on_center_selected')
 
     def on_center_selected(self, *args):
         self.center_selection = False
