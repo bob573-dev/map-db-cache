@@ -36,4 +36,4 @@ FOLDER_PNG = str(PNG_PATH / 'folder.png')
 ZOOM_IN_PNG = str(PNG_PATH / 'zoom_in.png')
 ZOOM_OUT_PNG = str(PNG_PATH / 'zoom_out.png')
 
-CUSTOM_PROVIDER_KEY = 'Your custom'
+LOCALES_DOMAIN = 'base'

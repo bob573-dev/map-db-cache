@@ -1,20 +1,18 @@
 from setup import setup
-from tools.utils import str_to_list
-
 setup()
 
 import os
 
-from kivy.app import App
 from kivy.core.window import Window
 from kivy.properties import ListProperty
 
-
+from localization import LocalizedApp
 from MBTilesDbCacheLayout import MBTilesDbCacheLayout
 from consts import DEFAULT_MAPS_DIRECTORY
+from tools.utils import str_to_list
 
 
-class MBTilesDbCacheApp(App):
+class MBTilesDbCacheApp(LocalizedApp):
     title = 'Map Cache'
     touch_filter = ListProperty([])
 
@@ -57,4 +55,6 @@ if __name__ == '__main__':
 
     if hasattr(sys, '_MEIPASS'):
         resource_add_path(os.path.join(sys._MEIPASS))
-    MBTilesDbCacheApp().run()
+    MBTilesDbCacheApp(
+        lang=os.getenv('ANTIBUG_LANG', default='ua')
+    ).run()
