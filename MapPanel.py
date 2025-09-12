@@ -30,15 +30,19 @@ class MapViewBounded(MapView):
     def _update_displayed_bbox(self, *_):
         min_lat, min_lon, max_lat, max_lon = self.bbox
         precision = 0.001
+        min_lat_is_out = min_lat < MIN_LATITUDE +precision
+        max_lat_is_out = max_lat > MAX_LATITUDE -precision
+        min_lon_is_out = min_lon < MIN_LONGITUDE +precision
+        max_lon_is_out = max_lon > MAX_LONGITUDE -precision
         lat = self.lat
         lon = self.lon
-        if min_lat < MIN_LATITUDE +precision:
+        if min_lat_is_out and not max_lat_is_out:
             lat += (max_lat - min_lat) / 60
-        elif max_lat > MAX_LATITUDE -precision:
+        elif max_lat_is_out and not min_lat_is_out:
             lat -= (max_lat - min_lat) / 60
-        if min_lon < MIN_LONGITUDE +precision:
+        if min_lon_is_out and not max_lon_is_out:
             lon += (max_lon - min_lon) / 60
-        elif max_lon > MAX_LONGITUDE -precision:
+        elif max_lon_is_out and not min_lon_is_out:
             lon -= (max_lon - min_lon) / 60
         if self.lat != lat or self.lon != lon:
             self.lat = lat
