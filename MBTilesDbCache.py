@@ -211,4 +211,7 @@ class MBTilesDbCache(EventDispatcher):
 
     def clear_cache(self):
         if self.cache and Path(self.cache_dir).is_dir():
-            shutil.rmtree(self.cache_dir)
+            try:
+                shutil.rmtree(self.cache_dir)
+            except:
+                shutil.rmtree(self.cache_dir, ignore_errors=True)
