@@ -1,5 +1,6 @@
 import inspect
 
+from kivy_garden.mapview.downloader import Downloader
 from kivy_garden.mapview.mbtsource import MBTilesMapSource
 from kivy_garden.mapview import MapView
 
@@ -20,7 +21,13 @@ PATCHES = {
             'if not self.collide_point(*touch.pos):',
             'if not self.collide_point(*touch.pos) or self.disabled:',
         )
-    ]
+    ],
+    inspect.getfile(Downloader): [
+        (
+            'traceback.print_exc()',
+            'Logger.debug("Downloader: exception occurred while retrieving future result")',
+        )
+    ],
 }
 
 
