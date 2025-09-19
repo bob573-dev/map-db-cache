@@ -1,4 +1,3 @@
-import shutil
 from pathlib import Path
 
 from kivy.logger import Logger
@@ -11,7 +10,7 @@ from mbtiles.tiles_threaded import MBTilesBuilderThreaded
 from providers import BROWSER_USER_AGENT
 from tools.binding_manager import BindingManager
 from tools.quadkey_url import QuadKeyUrl
-from tools.utils import check_filepath_valid
+from tools.utils import check_filepath_valid, try_delete_directory
 
 
 class MBTilesDbCache(EventDispatcher):
@@ -210,8 +209,5 @@ class MBTilesDbCache(EventDispatcher):
         Logger.info(f'Time to download: {self.time_to_download}')
 
     def clear_cache(self):
-        if self.cache and Path(self.cache_dir).is_dir():
-            try:
-                shutil.rmtree(self.cache_dir)
-            except:
-                shutil.rmtree(self.cache_dir, ignore_errors=True)
+        if self.cache:
+            try_delete_directory(self.cache_dir)

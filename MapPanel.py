@@ -1,5 +1,4 @@
 import math
-import time
 
 from kivy.clock import Clock
 from kivy.event import EventDispatcher
