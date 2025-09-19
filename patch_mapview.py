@@ -20,13 +20,25 @@ PATCHES = {
         (
             'if not self.collide_point(*touch.pos):',
             'if not self.collide_point(*touch.pos) or self.disabled:',
-        )
+        ),
     ],
     inspect.getfile(Downloader): [
         (
+            'from os import environ, makedirs',
+            'from os import environ, makedirs, replace',
+        ),
+        (
             'traceback.print_exc()',
             'Logger.debug("Downloader: exception occurred while retrieving future result")',
-        )
+        ),
+        (
+            'with open(cache_fn, "wb") as fd:',
+            'tmp_fn = cache_fn + ".part"\n            with open(tmp_fn, "wb") as fd:',
+        ),
+        (
+            'fd.write(data)',
+            'fd.write(data)\n            replace(tmp_fn, cache_fn)',
+        ),
     ],
 }
 
