@@ -6,6 +6,8 @@ from kivy.uix.button import Button
 from kivy.uix.filechooser import FileChooserListView
 from kivy.uix.popup import Popup
 
+from localization import _
+
 
 class FileChooserPopup(Popup):
     selected_dir = StringProperty(None)
@@ -15,7 +17,7 @@ class FileChooserPopup(Popup):
 
     def __init__(self, path: str, **kwargs):
         super().__init__(**kwargs)
-        self.title='Choose directory'
+        self.title=_('Choose directory')
         self._build_content(path or '.')
 
     def _build_content(self, path: str):
@@ -27,7 +29,7 @@ class FileChooserPopup(Popup):
         )
         self.selected_dir = self.filechooser.path
         self.submit_btn = Button(
-            text='Select',
+            text=_('Select'),
             on_release=self._submit,
             size_hint_y=0.1
         )

@@ -1,7 +1,8 @@
+from kivy.properties import BooleanProperty
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.label import Label
 
-from consts import TEXT_COLOR, FONT_SIZE_SMALL
+from consts import TEXT_COLOR, FONT_SIZE_SMALL, ERROR_COLOR
 
 
 class LabelAutoresized(Label):
@@ -22,6 +23,18 @@ class LabelAutoresized(Label):
         self.text_size = (self.width, None)
 
 
+class LabelValidatedAutoresized(LabelAutoresized):
+    invalid = BooleanProperty(False)
+
+    def __init__(self, **kwargs):
+        super(LabelValidatedAutoresized, self).__init__(**kwargs)
+        self.default_color = self.color
+        self.bind(invalid=self._update_color)
+
+    def _update_color(self, *args):
+        self.color = ERROR_COLOR if self.invalid else self.default_color
+
+
 class ProviderLabel(ButtonBehavior, Label):
     def __init__(self, **kwargs):
         kwargs.setdefault('color', TEXT_COLOR)
@@ -33,4 +46,8 @@ class ProviderLabel(ButtonBehavior, Label):
         self.text_size = (self.width, None)
 
 
-__all__ = ['LabelAutoresized', 'ProviderLabel']
+__all__ = [
+    'LabelAutoresized',
+    'LabelValidatedAutoresized',
+    'ProviderLabel'
+]

@@ -1,4 +1,3 @@
-import shutil
 from pathlib import Path
 
 from kivy.logger import Logger
@@ -11,6 +10,7 @@ from mbtiles.tiles_threaded import MBTilesBuilderThreaded
 from providers import BROWSER_USER_AGENT
 from tools.binding_manager import BindingManager
 from tools.quadkey_url import QuadKeyUrl
+from tools.utils import check_filepath_valid, try_delete_directory
 
 
 class MBTilesDbCache(EventDispatcher):
@@ -29,12 +29,13 @@ class MBTilesDbCache(EventDispatcher):
     cache = BooleanProperty(True)
     cache_dir = StringProperty(DEFAULT_CACHE_DIR)
     valid = BooleanProperty(False)
+    filepath_valid = BooleanProperty(False)
     downloading = BooleanProperty(False)
     progress = ListProperty([0,0])
     approximate_size_mb = NumericProperty(0)
     approximate_size_max_sample_count = NumericProperty(20)
-    time_to_download = NumericProperty(MAX_DOWNLOAD_TIME)
-    time_to_download_averaging_period_s = NumericProperty(3)
+    time_to_download = NumericProperty(0)
+    time_to_download_averaging_period_s = NumericProperty(2)
     __events__ = ['on_success', 'on_error', 'on_connection_lost', 'on_finish']
 
     def __init__(self, *args, **kwargs):
@@ -128,7 +129,7 @@ class MBTilesDbCache(EventDispatcher):
 
     def _handle_input_change(self, *_):
         self.approximate_size_mb = 0
-        self.time_to_download = MAX_DOWNLOAD_TIME
+        self.time_to_download = 0
         self._trigger_update_approximate_size()
 
     def _handle_approximate_size_mb(self, *_):
@@ -146,13 +147,19 @@ class MBTilesDbCache(EventDispatcher):
         self.time_to_download = self.builder.calculate_average_download_time(reset=True)
 
     def _update_valid(self, *_):
-        if None in (self.bbox, self.zoom_from, self.zoom_to, self.filepath) or not self.url:
-            self.valid = False
-            return
-        if not Path(self.filepath).parent.exists():
-            self.valid = False
-            return
-        self.valid = True
+        self.filepath_valid = bool(
+                self.filepath
+                and check_filepath_valid(self.filepath)
+                and (filepath := Path(self.filepath)).name.replace('.mbtiles', '')
+                and filepath.parent.exists()
+                and not '\\' in filepath.name
+                and not '/' in filepath.name
+        )
+        self.valid = bool(
+                self.filepath_valid
+                and not None in (self.bbox, self.zoom_from, self.zoom_to)
+                and self.url
+        )
 
     def download(self, rewrite = False):
         if self.valid:
@@ -202,5 +209,5 @@ class MBTilesDbCache(EventDispatcher):
         Logger.info(f'Time to download: {self.time_to_download}')
 
     def clear_cache(self):
-        if self.cache and Path(self.cache_dir).is_dir():
-            shutil.rmtree(self.cache_dir)
+        if self.cache:
+            try_delete_directory(self.cache_dir)

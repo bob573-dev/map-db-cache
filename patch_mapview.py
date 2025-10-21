@@ -1,5 +1,6 @@
 import inspect
 
+from kivy_garden.mapview.downloader import Downloader
 from kivy_garden.mapview.mbtsource import MBTilesMapSource
 from kivy_garden.mapview import MapView
 
@@ -17,10 +18,52 @@ PATCHES = {
     ],
     inspect.getfile(MapView): [
         (
+            'from kivy.uix.image import Image',
+            ('from kivy.uix.image import Image\n'
+             'from kivy.core.image import Image as CoreImage'),
+        ),
+        (
+            'def set_source(self, cache_fn):',
+            ('def set_source(self, cache_fn, retry=3, delay=0.05):\n'
+             '        try:\n'
+             '            CoreImage(cache_fn)'),
+        ),
+        (
+            'self.source = cache_fn',
+            '    self.source = cache_fn',
+        ),
+        (
+            'self.state = "need-animation"',
+            ('    self.state = "need-animation"\n'
+             '        except:\n'
+             '            if retry > 0:\n'
+             '                Clock.schedule_once(lambda dt: self.set_source(cache_fn, retry-1), delay)\n'
+             '            else:\n'
+             '                raise'),
+        ),
+        (
             'if not self.collide_point(*touch.pos):',
             'if not self.collide_point(*touch.pos) or self.disabled:',
-        )
-    ]
+        ),
+    ],
+    inspect.getfile(Downloader): [
+        (
+            'from os import environ, makedirs',
+            'from os import environ, makedirs, replace',
+        ),
+        (
+            'traceback.print_exc()',
+            'Logger.debug("Downloader: exception occurred while retrieving future result")',
+        ),
+        (
+            'with open(cache_fn, "wb") as fd:',
+            'tmp_fn = cache_fn + ".part"\n            with open(tmp_fn, "wb") as fd:',
+        ),
+        (
+            'fd.write(data)',
+            'fd.write(data)\n            replace(tmp_fn, cache_fn)',
+        ),
+    ],
 }
 
 

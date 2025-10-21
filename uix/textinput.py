@@ -1,15 +1,17 @@
-from math import floor
-
+from kivy.clock import Clock
 from kivy.graphics import Color, Line
 from kivy.properties import NumericProperty, BooleanProperty, ObjectProperty, ListProperty
 from kivy.uix.textinput import TextInput
 
 from consts import DEFAULT_LAT, DEFAULT_LON, INPUT_INCREASE_PNG, INPUT_DECREASE_PNG, FONT_SIZE_SMALL, \
-    MIN_CENTER_LATITUDE, MAX_CENTER_LONGITUDE, MAX_CENTER_LATITUDE, MIN_CENTER_LONGITUDE
+    MIN_CENTER_LATITUDE, MAX_CENTER_LONGITUDE, MAX_CENTER_LATITUDE, MIN_CENTER_LONGITUDE, ERROR_COLOR
+from localization import _
 from .button import ButtonImage
 
 
 class TextInputUnderlined(TextInput):
+    invalid = BooleanProperty(False)
+
     def  __init__(self, **kwargs):
         kwargs.setdefault('font_size', FONT_SIZE_SMALL)
         kwargs.setdefault('cursor_color', (0.3, 0.3, 0.3, 1))
@@ -20,12 +22,16 @@ class TextInputUnderlined(TextInput):
             self._line_color = Color(0, 0, 0, 0.8)
             self._underline = Line(points=[])
 
+        self._trigger_update_underline = Clock.create_trigger(self._update_underline)
         self.bind(
-            pos=self._update_underline,
-            size=self._update_underline,
+            pos=self._trigger_update_underline,
+            size=self._trigger_update_underline,
+            invalid=self._trigger_update_underline,
         )
+        self._trigger_update_underline()
 
     def _update_underline(self, *_):
+        self._line_color.rgba = ERROR_COLOR if self.invalid else (0, 0, 0, 0.8)
         x, y = self.x, self.y
         self._underline.points = [x + self.padding[0], y, x + self.width - self.padding[2], y]
 
@@ -141,7 +147,7 @@ class TextInputCoord(TextInputRangedUnderlined):
     def __init__(self, is_lat: bool = True, **kwargs):
         kwargs['input_filter'] = kwargs.get('input_filter', 'float')
 
-        kwargs['hint_text'] = kwargs.get('hint_text', f"example: {DEFAULT_LAT if is_lat else DEFAULT_LON}")
+        kwargs['hint_text'] = kwargs.get('hint_text', _('example') + f": {DEFAULT_LAT if is_lat else DEFAULT_LON}")
         kwargs['cursor_color'] = kwargs.get('cursor_color', (0.3, 0.3, 0.3, 1))
         kwargs['min_value'] = kwargs.get('min_value', MIN_CENTER_LATITUDE if is_lat else MIN_CENTER_LONGITUDE)
         kwargs['max_value'] = kwargs.get('max_value', MAX_CENTER_LATITUDE if is_lat else MAX_CENTER_LONGITUDE)

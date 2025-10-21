@@ -24,6 +24,7 @@ DOWNLOAD_PANEL_BACKGROUND = (0.95, 0.95, 0.95, 1)
 HEADER_BACKGROUND = (0.5, 0.5, 0.5, 1)
 HEADER_TEXT_COLOR = (1, 1, 1, 1)
 TEXT_COLOR = (0, 0, 0, 1)
+ERROR_COLOR = (1, 0, 0, 1)
 FONT_SIZE_MEDIUM = '16sp'
 FONT_SIZE_SMALL = '14sp'
 
@@ -35,4 +36,4 @@ FOLDER_PNG = str(PNG_PATH / 'folder.png')
 ZOOM_IN_PNG = str(PNG_PATH / 'zoom_in.png')
 ZOOM_OUT_PNG = str(PNG_PATH / 'zoom_out.png')
 
-CUSTOM_PROVIDER_KEY = 'Your custom'
+LOCALES_DOMAIN = 'base'

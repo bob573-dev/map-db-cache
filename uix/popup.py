@@ -4,6 +4,8 @@ from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 
+from localization import _
+
 
 class InfoPopup(Popup):
     text = StringProperty('')
@@ -45,7 +47,7 @@ class FileExistsPopup(Popup):
     __events__ = ['on_cancel', 'on_overwrite', 'on_copy']
 
     def __init__(self, **kwargs):
-        kwargs.setdefault('title', 'Make a choice')
+        kwargs.setdefault('title', _('Make a choice'))
         super().__init__(**kwargs)
         self._build_content()
 
@@ -63,13 +65,13 @@ class FileExistsPopup(Popup):
 
         control_buttons_layout = BoxLayout(size_hint=(1, 0.2), spacing=10)
 
-        cancel_button = Button(text="Cancel", size_hint_x=0.3)
+        cancel_button = Button(text=_("Cancel"), size_hint_x=0.3)
         cancel_button.bind(on_release=self._make_cancel)
 
-        overwrite_button = Button(text="Overwrite", size_hint_x=0.3)
+        overwrite_button = Button(text=_("Overwrite"), size_hint_x=0.3)
         overwrite_button.bind(on_release=self._make_overwrite)
 
-        ok_button = Button(text="Save copy", size_hint_x=0.3)
+        ok_button = Button(text=_("Save a copy"), size_hint_x=0.3)
         ok_button.bind(on_release=self._make_copy)
 
         control_buttons_layout.add_widget(cancel_button)

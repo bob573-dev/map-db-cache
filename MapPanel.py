@@ -20,6 +20,35 @@ from tools.quadkey_url import QuadKeyUrl
 from uix import ButtonImage, BoxLayoutAutoresized
 
 
+class MapViewBounded(MapView):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._trigger_update_displayed_bbox = Clock.create_trigger(self._update_displayed_bbox)
+        self.bind(bbox=self._trigger_update_displayed_bbox)
+
+    def _update_displayed_bbox(self, *_):
+        min_lat, min_lon, max_lat, max_lon = self.bbox
+        precision = 0.001
+        min_lat_is_out = min_lat < MIN_LATITUDE +precision
+        max_lat_is_out = max_lat > MAX_LATITUDE -precision
+        min_lon_is_out = min_lon < MIN_LONGITUDE +precision
+        max_lon_is_out = max_lon > MAX_LONGITUDE -precision
+        lat = self.lat
+        lon = self.lon
+        if min_lat_is_out and not max_lat_is_out:
+            lat += (max_lat - min_lat) / 60
+        elif max_lat_is_out and not min_lat_is_out:
+            lat -= (max_lat - min_lat) / 60
+        if min_lon_is_out and not max_lon_is_out:
+            lon += (max_lon - min_lon) / 60
+        elif max_lon_is_out and not min_lon_is_out:
+            lon -= (max_lon - min_lon) / 60
+        if self.lat != lat or self.lon != lon:
+            self.lat = lat
+            self.lon = lon
+            self.center_on(self.lat, self.lon)
+
+
 class MapMarkerSized(MapMarker):
     marker_size = NumericProperty(30)
 
@@ -61,8 +90,6 @@ class DrawersMapLayer(MapLayer):
         def recalc(self):
             pass
         def draw(self):
-            pass
-        def unload(self):
             pass
 
     def __init__(self, **kwargs):
@@ -182,7 +209,7 @@ class CenteredAreaDrawer(DrawersMapLayer.LayerDrawer):
     top_right_lat = NumericProperty(None, allownone=True)
     top_right_lon = NumericProperty(None, allownone=True)
     line_width = NumericProperty(1.5)
-    color = ListProperty((.9, 0, 0, .8))
+    color = ListProperty((.9, 0, 0, 1))
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -243,6 +270,8 @@ class MapPanel(FloatLayout):
     url = StringProperty()
     subdomains = ListProperty(DEFAULT_TILES_SUBDOMAINS)
     attribution = StringProperty(None, allownone=True)
+    min_zoom = NumericProperty(2)
+    max_zoom = NumericProperty(19)
     zoom = NumericProperty(5)
     markers_size = NumericProperty(30)
     precision = NumericProperty(6)
@@ -279,6 +308,7 @@ class MapPanel(FloatLayout):
             url=self._trigger_update_map,
             attribution=self._trigger_update_map,
             subdomains=self._trigger_update_map,
+            max_zoom=self._trigger_update_map,
             bottom_left_lat=self._trigger_update_bbox,
             bottom_left_lon=self._trigger_update_bbox,
             top_right_lat=self._trigger_update_bbox,
@@ -303,9 +333,15 @@ class MapPanel(FloatLayout):
             lon = map_view.lon
 
         url = QuadKeyUrl.from_url(self.url)
-        self.map_source = MapSource(url=url, attribution=self.attribution, subdomains=self.subdomains)
+        self.map_source = MapSource(
+            url=url,
+            min_zoom=self.min_zoom,
+            max_zoom=self.max_zoom,
+            attribution=self.attribution,
+            subdomains=self.subdomains,
+        )
         self.set_zoom(self.zoom)
-        self.map_view = map_view = MapView(
+        self.map_view = map_view = MapViewBounded(
             map_source=self.map_source,
             lat=lat, lon=lon,
             zoom=self.zoom,
@@ -375,16 +411,20 @@ class MapPanel(FloatLayout):
         map_view = self.map_view
         if center_selection:
             self._bindings.bind_item(map_view, 'on_touch_down', self._select_center_on_touch)
-            Logger.debug('Center selection on_touch_downd binded')
+            Logger.debug('Center selection on_touch_down binded')
         else:
             self._bindings.unbind_item(map_view, 'on_touch_down', self._select_center_on_touch)
-            Logger.debug('Center selection on_touch_downd unbinded')
+            Logger.debug('Center selection on_touch_down unbinded')
 
     def _select_center_on_touch(self, _, touch):
-        lat_lon = self.map_view.get_latlon_at(*touch.pos)
-        self.center_lat = round(clamp(lat_lon[0], MIN_CENTER_LATITUDE, MAX_CENTER_LATITUDE), self.precision)
-        self.center_lon = round(clamp(lat_lon[1], MIN_CENTER_LONGITUDE, MAX_CENTER_LONGITUDE), self.precision)
-        self.dispatch('on_center_selected')
+        if (
+            (not 'button' in touch.profile or touch.button == 'left')
+            and self.collide_point(*touch.pos)
+        ):
+            lat_lon = self.map_view.get_latlon_at(*touch.pos)
+            self.center_lat = round(clamp(lat_lon[0], MIN_CENTER_LATITUDE, MAX_CENTER_LATITUDE), self.precision)
+            self.center_lon = round(clamp(lat_lon[1], MIN_CENTER_LONGITUDE, MAX_CENTER_LONGITUDE), self.precision)
+            self.dispatch('on_center_selected')
 
     def on_center_selected(self, *args):
         self.center_selection = False

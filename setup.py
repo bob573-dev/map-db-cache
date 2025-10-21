@@ -1,5 +1,5 @@
 import logging
-import sys
+import os, sys
 from pathlib import Path
 
 DEFAULT_LOG_LEVEL = logging.DEBUG
@@ -22,11 +22,15 @@ def setup():  # should be executed before any kivy import
         maximize = True
 
     _setup_logging(log_level)
+    _setup_mouse()
     _setup_window(maximize)
     _setup_cursor()
 
 
 def _setup_logging(level):
+    if sys.__stdout__ is None or sys.__stderr__ is None:
+        os.environ['KIVY_NO_CONSOLELOG'] = '1'
+
     from kivy.config import Config
     Config.set('kivy', 'log_dir', Path(DEFAULT_LOG_DIR).absolute())
 
@@ -39,6 +43,11 @@ def _setup_logging(level):
     root_logger.setLevel(level)
     for handler in root_logger.handlers:
         handler.setLevel(level)
+
+
+def _setup_mouse():
+    from kivy.config import Config
+    Config.set('input', 'mouse', 'mouse,disable_multitouch')
 
 
 def _setup_cursor():
