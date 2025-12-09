@@ -29,4 +29,5 @@ MAX_DOWNLOAD_TIME = 2678400  # 31 days in s
 
 
 from .tiles import *
+from .tiles_threaded import *
 from .sources import *

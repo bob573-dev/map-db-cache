@@ -3,7 +3,6 @@ import mimetypes
 import os
 import random
 import shutil
-import sys
 import time
 import uuid
 from gettext import gettext as _
@@ -412,3 +411,9 @@ class ImageExporter(TilesManager):
         """
         image = Image.open(BytesIO(data))
         return image.convert('RGBA')
+
+
+__all__ = [
+    'MBTilesBuilder',
+    'ImageExporter',
+]

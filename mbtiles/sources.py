@@ -125,3 +125,9 @@ class TileDownloader(TileSource):
                 if (sleeptime <= 10) and (r % 2 == 0):
                     sleeptime += 1  # increase wait
         raise DownloadError(_("Cannot download URL %s") % url)
+
+
+__all__ = [
+    'MBTilesReader',
+    'TileDownloader',
+]

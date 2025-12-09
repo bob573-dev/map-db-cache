@@ -134,3 +134,15 @@ msgstr ""
 
 msgid "s"
 msgstr ""
+
+msgid "Map + elevation"
+msgstr ""
+
+msgid "Only map"
+msgstr ""
+
+msgid "Only elevation"
+msgstr ""
+
+msgid "Map content"
+msgstr ""

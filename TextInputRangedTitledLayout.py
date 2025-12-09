@@ -1,10 +1,12 @@
-from kivy.properties import NumericProperty, ObjectProperty
+from kivy.properties import NumericProperty, ObjectProperty, StringProperty
 from kivy.uix.widget import Widget
 
 from uix import BoxLayoutShort, LabelAutoresized, TextInputRangedUnderlined, BoxLayoutColored
 
 
 class TextInputRangedTitledLayout(BoxLayoutShort):
+    title = StringProperty('set value')
+    value = NumericProperty(defaultvalue=None, allownone=True)
     min_value = NumericProperty(defaultvalue=0)
     max_value = NumericProperty(defaultvalue=0)
     value_setter = ObjectProperty(None)
@@ -12,18 +14,14 @@ class TextInputRangedTitledLayout(BoxLayoutShort):
     increase_button = ObjectProperty(None)
     decrease_button = ObjectProperty(None)
 
-    def __init__(
-            self,
-            title = '',
-            hint_text = '',
-            text = '',
-            **kwargs
-    ):
+    def __init__(self, hint_text='', text='', **kwargs):
         super().__init__(**kwargs)
         left_container = BoxLayoutShort(orientation='vertical')
         left_container.bind(height=self._on_left_container_height)
 
-        self.label = label = LabelAutoresized(text=title)
+        self.label = label = LabelAutoresized(text=self.title)
+        self.bind(title=label.setter('text'))
+
         self.textinput = textinput = TextInputRangedUnderlined(
             size_hint_y=None,
             text=text,
@@ -35,6 +33,7 @@ class TextInputRangedTitledLayout(BoxLayoutShort):
         self.bind(
             min_value=textinput.setter('min_value'),
             max_value=textinput.setter('max_value'),
+            value=lambda i, v: textinput.set_text_normalized(v),
         )
         textinput.bind(minimum_height=textinput.setter('height'))
         if self.value_setter:
@@ -49,11 +48,11 @@ class TextInputRangedTitledLayout(BoxLayoutShort):
         )
 
         if self.buttons_overheight:
-            left_container.add_widget(Widget(height=self.buttons_overheight/2, size_hint_y=None))
+            left_container.add_widget(Widget(height=self.buttons_overheight / 2, size_hint_y=None))
         left_container.add_widget(label)
         left_container.add_widget(textinput)
         if self.buttons_overheight:
-            left_container.add_widget(Widget(height=self.buttons_overheight/2, size_hint_y=None))
+            left_container.add_widget(Widget(height=self.buttons_overheight / 2, size_hint_y=None))
 
         buttons_container.add_widget(textinput.increase_button)
         buttons_container.add_widget(textinput.decrease_button)

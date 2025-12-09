@@ -3,7 +3,7 @@ from pathlib import Path
 
 from kivy.logger import Logger
 from kivy.clock import Clock
-from kivy.properties import NumericProperty, StringProperty, BooleanProperty, ListProperty, DictProperty
+from kivy.properties import NumericProperty, StringProperty, BooleanProperty, ListProperty, DictProperty, OptionProperty
 from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
@@ -19,16 +19,37 @@ from FileChooser import FileChooserPopup
 from MBTilesDbCache import MBTilesDbCache
 from MapPanel import MapPanel
 from TextInputRangedTitledLayout import TextInputRangedTitledLayout
-from consts import DEFAULT_MIN_ZOOM, DEFAULT_MAX_ZOOM, DEFAULT_MAPS_DIRECTORY, FONT_SIZE_MEDIUM, \
-    DROPDOWN_DOWN_PNG, DROPDOWN_UP_PNG, FOLDER_PNG, HEADER_BACKGROUND, HEADER_TEXT_COLOR, \
-    DEFAULT_MAP_BASENAME, FONT_SIZE_SMALL
+from consts import (
+    DEFAULT_MIN_ZOOM,
+    DEFAULT_MAX_ZOOM,
+    DEFAULT_MAPS_DIRECTORY,
+    FONT_SIZE_MEDIUM,
+    DROPDOWN_DOWN_PNG,
+    DROPDOWN_UP_PNG,
+    FOLDER_PNG,
+    HEADER_BACKGROUND,
+    HEADER_TEXT_COLOR,
+    DEFAULT_MAP_BASENAME,
+    FONT_SIZE_SMALL,
+)
+from enums import MapContent
 from mbtiles import DEFAULT_TILES_SUBDOMAINS, DEFAULT_TILE_FORMAT, MAX_DOWNLOAD_TIME, DEFAULT_TIMEOUT
 from providers import PROVIDERS, BROWSER_USER_AGENT, DEFAULT_PROVIDER
 from tools.utils import format_seconds
 from uix import (
-    InfoPopup, FileExistsPopup, LabelAutoresized, TextInputCoord,
-    TextInputUnderlined, BoxLayoutColored, ColoredLayout, BoxLayoutShort, SwitchButtonColored, ButtonColored,
-    ProviderLabel, ButtonImage, LabelValidatedAutoresized
+    InfoPopup,
+    FileExistsPopup,
+    LabelAutoresized,
+    TextInputCoord,
+    TextInputUnderlined,
+    BoxLayoutColored,
+    ColoredLayout,
+    BoxLayoutShort,
+    SwitchButtonColored,
+    ButtonColored,
+    DropdownLabel,
+    ButtonImage,
+    LabelValidatedAutoresized,
 )
 from localization import _
 
@@ -36,6 +57,7 @@ from localization import _
 class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
     provider = StringProperty(defaultvalue=DEFAULT_PROVIDER)
     provider_url = StringProperty()
+    map_content = OptionProperty(options=MapContent.values(), defaultvalue=MapContent.MAP_WITH_ELEVATION)
     attribution = StringProperty()
     use_attribution = BooleanProperty(False)
     subdomains = ListProperty()
@@ -45,17 +67,19 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
     side = NumericProperty(defaultvalue=13, allownone=True)
     min_side = NumericProperty(1)
     max_side = NumericProperty(25)
+    max_side_elevation = NumericProperty(50)
     zoom = NumericProperty(defaultvalue=5)
     zoom_to = NumericProperty(16, allownone=True)
     min_zoom = NumericProperty(defaultvalue=DEFAULT_MIN_ZOOM)
     max_zoom = NumericProperty(defaultvalue=DEFAULT_MAX_ZOOM)
     bbox = ListProperty(None, allownone=True)
+    elevation_margin = StringProperty('33%')
 
     directory = StringProperty(defaultvalue=DEFAULT_MAPS_DIRECTORY)
     file_basename = StringProperty(defaultvalue=DEFAULT_MAP_BASENAME)
     filepath = StringProperty(None, allownone=True)
     downloading = BooleanProperty(False)
-    progress = ListProperty([0,0])
+    progress = ListProperty([0, 0])
     approximate_size_mb = NumericProperty(0)
     time_to_download = NumericProperty(0)
 
@@ -86,7 +110,10 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
             provider=self._update_on_provider,
             directory=self._update_filepath,
             file_basename=self._update_filepath,
+            map_content=self._update_filepath,
         )
+        self.bind(map_content=self._update_max_size)
+        self.bind(map_content=self._update_elevation_margin)
 
     def _update_on_provider(self, *_):
         if self.provider == self.custom_provider_key:
@@ -110,9 +137,25 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
 
     def _update_filepath(self, *_):
         if self.directory and self.file_basename:
-            self.filepath = str(Path(self.directory) / f'{self.file_basename}.mbtiles')
+            extension = '.tif' if self.map_content == MapContent.ONLY_ELEVATION else '.mbtiles'
+            self.filepath = str(Path(self.directory) / f'{self.file_basename}{extension}')
         else:
             self.filepath = None
+
+    def _update_max_size(self, *_):
+        max_side = MBTilesDbCacheLayout.max_side.defaultvalue
+        if self.map_content == MapContent.ONLY_ELEVATION:
+            self.max_side = self.max_side_elevation
+            if self.side == max_side:
+                self.side = self.max_side
+        else:
+            self.max_side = max_side
+
+    def _update_elevation_margin(self, *_):
+        if self.map_content == MapContent.ONLY_ELEVATION:
+            self.elevation_margin = '0'
+        else:
+            self.elevation_margin = MBTilesDbCacheLayout.elevation_margin.defaultvalue
 
     def _create_directory_if_not_exists(self):
         Path(self.directory).mkdir(parents=True, exist_ok=True)
@@ -129,6 +172,8 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
             tile_format=self.tile_format,
             headers=self.headers,
             tile_timeout=self.tile_timeout,
+            map_content=self.map_content,
+            elevation_margin=self.elevation_margin,
         )
         self.bind(
             provider_url=downloader.setter('url'),
@@ -141,6 +186,8 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
             tile_format=downloader.setter('tile_format'),
             headers=downloader.setter('headers'),
             tile_timeout=downloader.setter('tile_timeout'),
+            map_content=downloader.setter('map_content'),
+            elevation_margin=downloader.setter('elevation_margin'),
         )
         downloader.bind(
             downloading=self.setter('downloading'),
@@ -152,11 +199,19 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
         )
 
     def show_exception_popup(self, *args):
-        self.info_popup.text = _('Map downloading failed')
+        self.info_popup.text = (
+            _('Elevation map downloading failed')
+            if self.map_content == MapContent.ONLY_ELEVATION
+            else _('Map downloading failed')
+        )
         self.info_popup.open()
 
     def show_success_popup(self, *args):
-        self.info_popup.text = _('Map downloading finished successfully')
+        self.info_popup.text = (
+            _('Elevation map downloading finished successfully')
+            if self.map_content == MapContent.ONLY_ELEVATION
+            else _('Map downloading finished successfully')
+        )
         self.info_popup.open()
 
     def download_with_validation(self, *args):
@@ -170,7 +225,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
         self.download()
 
     def download(self, rewrite=False):
-        self.progress = [0,0]
+        self.progress = [0, 0]
         self.downloader.download(rewrite=rewrite)
 
     def download_copy(self):
@@ -292,7 +347,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
             anchor_y='center',
             size_hint_y=None,
             height=50,
-            padding=(0, 6, 0, 4)
+            padding=(0, 6, 0, 4),
         )
         self._init_select_center_button()
         choose_on_map_container.add_widget(self.select_center_button)
@@ -307,7 +362,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
 
         coords_layout = BoxLayoutShort(
             spacing=5,
-            padding=(0,6),
+            padding=(0, 6),
         )
 
         coords_layout.add_widget(self._create_coord_input(is_lat=True))
@@ -332,10 +387,12 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
                 self.select_center_button.disabled = True
             else:
                 self.select_center_button.disabled = False
+
         self.bind(downloading=on_downloading)
 
         def on_center_selected(*_):
             self.select_center_button.deactivate()
+
         self.map.bind(on_center_selected=on_center_selected)
 
     def _create_coord_input(self, is_lat=True):
@@ -348,7 +405,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
             size_hint=(None, None),
         )
         textinput.bind(minimum_height=textinput.setter('height'))
-        self.bind(downloading=lambda i,v: setattr(textinput, 'readonly', v))
+        self.bind(downloading=lambda i, v: setattr(textinput, 'readonly', v))
 
         if is_lat:
             textinput.bind(value=self.map.setter('center_lat'))
@@ -357,22 +414,30 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
             textinput.bind(value=self.map.setter('center_lon'))
             self.map.bind(on_center_selected=lambda *_: textinput.set_text_normalized(self.map.center_lon))
 
-        container.bind(width=lambda i, v: setattr(
-            textinput, 'width', v - container.padding[0] - container.padding[2]))
+        container.bind(width=lambda i, v: setattr(textinput, 'width', v - container.padding[0] - container.padding[2]))
         container.add_widget(textinput)
 
         return container
 
     def _create_side_input_layout(self):
         layout = TextInputRangedTitledLayout(
-            title = _('Side length in km') + f' ({self.min_side}-{self.max_side})',
-            hint_text = _('Enter side length...'),
-            text = str(type(self).side.defaultvalue),
-            min_value = self.min_side,
-            max_value = self.max_side,
-            value_setter = self.setter('side'),
+            hint_text=_('Enter side length...'),
+            text=str(type(self).side.defaultvalue),
+            min_value=self.min_side,
+            max_value=self.max_side,
+            value_setter=self.setter('side'),
         )
-        self.bind(downloading=lambda i,v: layout.disable(v))
+        self.bind(downloading=lambda i, v: layout.disable(v))
+
+        def _update_side_input(*args):
+            layout.title = _('Side length in km') + f' ({self.min_side}-{self.max_side})'
+            layout.max_value = self.max_side
+        _update_side_input()
+        self.bind(
+            max_side=_update_side_input,
+            side=layout.setter('value'),
+        )
+
         return layout
 
     def create_source_section(self):
@@ -391,68 +456,17 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
         )
         header_label_background.add_widget(header_label)
 
-        dropdown = DropDown(auto_width=False,
-                            bar_width=6,
-                            bar_color=(0.9, 0.1, 0.1, 0.9),
-                            bar_inactive_color=(0.9, 0.1, 0.1, 0.3),
-                            )
-        for provider in (self.custom_provider_key, *PROVIDERS.keys()):
-            option = Button(text=provider, size_hint_y=None, height=44)
-            option.bind(on_release=lambda btn: dropdown.select(btn.text))
-            dropdown.add_widget(option)
-
-        container_layout.bind(width=dropdown.setter('width'))
-
-        select_layout = BoxLayoutShort()
-        container_layout.add_widget(select_layout)
-
-        provider_label = ProviderLabel(
-            text=self.provider,
-            valign='middle',
-            halign='center',
-            size_hint_y=None,
-            height=37,
+        provider_dropdown_layout = self._create_dropdown_layout(
+            field='provider',
+            options=(self.custom_provider_key, *PROVIDERS.keys()),
         )
-        self.bind(provider=provider_label.setter('text'))
-
-        dropdown_button = ButtonImage(
-            size_hint=(None, None),
-            size=(33, 33),
-            image=DROPDOWN_DOWN_PNG,
-        )
-        self.bind(downloading=lambda i, v: setattr(dropdown_button, 'disabled', v))
-        dropdown.bind(
-            on_dismiss=lambda *_: dropdown_button.set_image(DROPDOWN_DOWN_PNG),
-            on_select=self.setter('provider'),
-        )
-
-        def _on_press(*_):
-            if not self.downloading:
-                dropdown_button.background_color = (*dropdown_button.background_color[:3], 0.5)
-
-        def _on_release(*_):
-            if not self.downloading:
-                dropdown_button.background_color = (*dropdown_button.background_color[:3], 1)
-                dropdown_button.set_image(DROPDOWN_UP_PNG)
-                dropdown.open(provider_label)
-
-        provider_label.bind(
-            on_press=_on_press,
-            on_release=_on_release,
-        )
-        dropdown_button.bind(
-            on_press=_on_press,
-            on_release=_on_release,
-        )
-
-        select_layout.add_widget(provider_label)
-        select_layout.add_widget(dropdown_button)
+        container_layout.add_widget(provider_dropdown_layout)
 
         source_input_layout = GridLayout(
-            padding = (6,0),
+            padding=(6, 0),
             rows=2,
             cols=1,
-            size_hint_y = None,
+            size_hint_y=None,
         )
         source_input_layout.bind(minimum_height=source_input_layout.setter('height'))
 
@@ -470,16 +484,20 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
         source_input.bind(minimum_height=source_input.setter('height'))
         self.bind(downloading=lambda i, v: setattr(source_input, 'readonly', v))
 
-        source_input_layout.bind(width=lambda i,v: setattr(
-            source_input, 'width', v - source_input_layout.padding[0] - source_input_layout.padding[2]))
+        source_input_layout.bind(
+            width=lambda i, v: setattr(
+                source_input, 'width', v - source_input_layout.padding[0] - source_input_layout.padding[2]
+            )
+        )
         source_input_layout.add_widget(source_input)
 
         def _refresh_cursor(*_):
             source_input.cursor = (0, 0)
             source_input.scroll_x = 0
+
         trigger_refresh_cursor = Clock.create_trigger(_refresh_cursor)
 
-        def _on_provider(_,v):
+        def _on_provider(_, v):
             if v == self.custom_provider_key:
                 source_input.text = ''
                 source_input.readonly = False
@@ -487,12 +505,94 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
                 source_input.text = PROVIDERS[v].url
                 source_input.readonly = True
             trigger_refresh_cursor()
+
         self.bind(provider=_on_provider)
-        source_input.bind(text=lambda i,v: setattr(self, 'provider_url', v.strip()))
+        source_input.bind(text=lambda i, v: setattr(self, 'provider_url', v.strip()))
         trigger_refresh_cursor()
 
         container_layout.add_widget(source_input_layout)
+
+        map_content_dropdown_layout = self._create_dropdown_layout(
+            field='map_content',
+            options=MapContent.values(),
+            title=_('Map content'),
+        )
+        map_content_dropdown_layout.padding = (0, 10, 0, 0)
+        container_layout.add_widget(map_content_dropdown_layout)
+
         return container_layout
+
+    def _create_dropdown_layout(self, field, options, title=None):
+        dropdown = DropDown(
+            auto_width=False,
+            bar_width=6,
+            bar_color=(0.9, 0.1, 0.1, 0.9),
+            bar_inactive_color=(0.9, 0.1, 0.1, 0.3),
+        )
+
+        def _translate_item_text(item):
+            item.text = _(item.text)
+
+        for option in options:
+            btn = Button(text=option, size_hint_y=None, height=44)
+            Clock.schedule_once(lambda *args, item=btn: _translate_item_text(item), 0.1)
+            btn.bind(on_release=lambda *args, item=option: dropdown.select(item))
+            dropdown.add_widget(btn)
+
+        dropdown_layout = BoxLayoutShort()
+        dropdown_layout.bind(width=dropdown.setter('width'))
+
+        if title:
+            layout = BoxLayoutShort(orientation='vertical')
+            label = LabelAutoresized(text=title)
+            layout.add_widget(label)
+            layout.add_widget(dropdown_layout)
+        else:
+            layout = dropdown_layout
+
+        label = DropdownLabel(
+            text=getattr(self, field),
+            valign='middle',
+            halign='center',
+            size_hint_y=None,
+            height=37,
+        )
+        self.bind(**{field: lambda i, v: label.setter('text')(i, _(v))})
+        Clock.schedule_once(lambda *args: _translate_item_text(label), 0.1)
+
+        dropdown_button = ButtonImage(
+            size_hint=(None, None),
+            size=(33, 33),
+            image=DROPDOWN_DOWN_PNG,
+        )
+        self.bind(downloading=lambda i, v: setattr(dropdown_button, 'disabled', v))
+        dropdown.bind(
+            on_dismiss=lambda *_: dropdown_button.set_image(DROPDOWN_DOWN_PNG),
+            on_select=self.setter(field),
+        )
+
+        def _on_press(*_):
+            if not self.downloading:
+                dropdown_button.background_color = (*dropdown_button.background_color[:3], 0.5)
+
+        def _on_release(*_):
+            if not self.downloading:
+                dropdown_button.background_color = (*dropdown_button.background_color[:3], 1)
+                dropdown_button.set_image(DROPDOWN_UP_PNG)
+                dropdown.open(label)
+
+        label.bind(
+            on_press=_on_press,
+            on_release=_on_release,
+        )
+        dropdown_button.bind(
+            on_press=_on_press,
+            on_release=_on_release,
+        )
+
+        dropdown_layout.add_widget(label)
+        dropdown_layout.add_widget(dropdown_button)
+        return layout
 
     def create_zoom_section(self):
         container_layout = BoxLayoutShort(orientation='vertical')
@@ -511,12 +611,13 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
 
         def generate_current_zoom_label_text():
             return _('Current:') + f' {self.zoom}'
+
         current_zoom_label = LabelAutoresized(
             text=generate_current_zoom_label_text(),
             size_hint_x=1,
             color=(0.1, 0.1, 0.1, 1),
         )
-        self.bind(zoom=lambda i,v: setattr(current_zoom_label, 'text', generate_current_zoom_label_text()))
+        self.bind(zoom=lambda i, v: setattr(current_zoom_label, 'text', generate_current_zoom_label_text()))
         container_layout.add_widget(Widget(size_hint_y=None, height=5))
         container_layout.add_widget(current_zoom_label)
 
@@ -533,8 +634,13 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
             max_value=self.max_zoom,
             value_setter=self.setter('zoom_to'),
         )
+
+        def _disable_input(*_):
+            layout.disable(self.downloading or self.map_content == MapContent.ONLY_ELEVATION)
+
         self.bind(
-            downloading=lambda i, v: layout.disable(v),
+            downloading=_disable_input,
+            map_content=_disable_input,
             min_zoom=layout.setter('min_value'),
             max_zoom=layout.setter('max_value'),
         )
@@ -566,11 +672,11 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
         dir_textinput = dirselect_layout.textinput
         dir_textinput.readonly = True
         dir_textinput.multiline = False
-        dir_textinput.disabled_foreground_color=TextInputUnderlined.foreground_color.defaultvalue
-        self.bind(directory=lambda i,v: setattr(dir_textinput, 'text', str(Path(v).absolute())))
+        dir_textinput.disabled_foreground_color = TextInputUnderlined.foreground_color.defaultvalue
+        self.bind(directory=lambda i, v: setattr(dir_textinput, 'text', str(Path(v).absolute())))
         self.bind(downloading=lambda i, v: setattr(dirselect_layout.button, 'disabled', v))
 
-        file_chooser = FileChooserPopup(path=self.directory, size_hint=(.5,.75))
+        file_chooser = FileChooserPopup(path=self.directory, size_hint=(0.5, 0.75))
         file_chooser.bind(selected_dir=self.setter('directory'))
 
         dirselect_layout.button.bind(on_release=lambda *_: file_chooser.open())
@@ -602,23 +708,33 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
         def _fill_input_if_file(*_):
             if file_chooser.selected_file:
                 filename_textinput.text = Path(file_chooser.selected_file).stem
+
         file_chooser.bind(on_submit=_fill_input_if_file)
 
-        extention_label = LabelValidatedAutoresized(text='.mbtiles',
-                                           pos_hint={"center_y": 0.4})
+        extension_label = LabelValidatedAutoresized(pos_hint={"center_y": 0.4})
 
-        filename_textinput.bind(right=lambda i, v: setattr(extention_label, 'x', v))
+        def _update_extension_label_text(*_):
+            extension_label.text = '.tif' if self.map_content == MapContent.ONLY_ELEVATION else '.mbtiles'
 
-        file_basename_input_layout.bind(width=lambda i, v: setattr(filename_textinput, 'width', v - extention_label.width))
-        extention_label.bind(width=lambda i, v: setattr(filename_textinput, 'width', file_basename_input_layout.width - v))
+        self.bind(map_content=_update_extension_label_text)
+        _update_extension_label_text()
+
+        filename_textinput.bind(right=lambda i, v: setattr(extension_label, 'x', v))
+
+        file_basename_input_layout.bind(
+            width=lambda i, v: setattr(filename_textinput, 'width', v - extension_label.width)
+        )
+        extension_label.bind(
+            width=lambda i, v: setattr(filename_textinput, 'width', file_basename_input_layout.width - v)
+        )
         file_basename_input_layout.add_widget(filename_textinput)
-        file_basename_input_layout.add_widget(extention_label)
+        file_basename_input_layout.add_widget(extension_label)
 
         def _update_input_invalid(*_):
             invalid = bool(not self.downloader.filepath_valid and self.file_basename)
             filename_textinput.invalid = invalid
             filename_label.invalid = invalid
-            extention_label.invalid = invalid
+            extension_label.invalid = invalid
 
         trigger_update_input_invalid = Clock.create_trigger(_update_input_invalid)
         self.bind(file_basename=trigger_update_input_invalid)
@@ -626,19 +742,19 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
 
         def format_approximate_size(size_mb):
             return _('Approximate size') + f': {size_mb} MB'
+
         approximate_size_label = LabelAutoresized(
             text=format_approximate_size(self.approximate_size_mb),
             size_hint_x=1,
         )
-        self.bind(
-            approximate_size_mb=lambda i,v: setattr(approximate_size_label, 'text', format_approximate_size(v))
-        )
+        self.bind(approximate_size_mb=lambda i, v: setattr(approximate_size_label, 'text', format_approximate_size(v)))
         root_container.add_widget(Widget(size_hint_y=None, height=12))
         root_container.add_widget(approximate_size_label)
 
         time_label = LabelAutoresized(size_hint_x=1)
+
         def update_time_label_text(*args):
-            if self.time_to_download == MAX_DOWNLOAD_TIME:
+            if self.time_to_download >= MAX_DOWNLOAD_TIME:
                 formated_time = '∞'
             elif self.time_to_download == 0:
                 formated_time = '__' + _('m') + '__' + _('s')
@@ -648,6 +764,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
                 time_label.text = _('Time remaining') + f': {formated_time}'
             else:
                 time_label.text = _('Estimated time') + f': {formated_time}'
+
         trigger_update_time_label_text = Clock.create_trigger(update_time_label_text)
         self.bind(
             time_to_download=trigger_update_time_label_text,
@@ -667,28 +784,28 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
             text=_('DOWNLOAD'),
             on_release=self.download_with_validation,
         )
+
         def set_download_disabled(*_):
             download_button.disabled = not self.downloader.valid or self.downloader.downloading
+
         self.bind(downloading=set_download_disabled)
         self.downloader.bind(valid=set_download_disabled)
         set_download_disabled()
 
         self.progress_bar = ProgressBar(value=self.progress[0], max=self.progress[1])
-        label = LabelAutoresized(text='0% (0/0)',
-                                 size_hint_x=1,
-                                 halign='center')
+        label = LabelAutoresized(text='0% (0/0)', size_hint_x=1, halign='center')
+
         def _update_progress(*_):
             current = self.progress[0]
             total = self.progress[1]
             self.progress_bar.max = total
             self.progress_bar.value = current
-            label.text = f'{round(self.progress_bar.value_normalized * 100, 2) }% ({current}/{total})'
+            label.text = f'{round(self.progress_bar.value_normalized * 100, 1) }% ({current}/{total})'
+
         self.bind(progress=_update_progress)
 
         progress_container = BoxLayout(orientation='vertical')
-        bar_container = BoxLayout(
-            size_hint_y=0.5,
-            orientation='vertical')
+        bar_container = BoxLayout(size_hint_y=0.5, orientation='vertical')
 
         bar_container.add_widget(self.progress_bar)
         bar_container.add_widget(label)
@@ -712,11 +829,13 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
             text=_('PAUSE'),
             active_text=_('RESUME'),
         )
+
         def pause_resume(*_):
             if self.pause_resume_button.active:
                 self.pause()
             else:
                 self.resume()
+
         self.pause_resume_button.bind(active=pause_resume)
 
         progress_buttons_container.add_widget(self.stop_button)

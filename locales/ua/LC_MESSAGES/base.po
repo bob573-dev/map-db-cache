@@ -134,3 +134,15 @@ msgstr "хв"
 
 msgid "s"
 msgstr "с"
+
+msgid "Map + elevation"
+msgstr "Карта + висоти"
+
+msgid "Only map"
+msgstr "Лише карта"
+
+msgid "Only elevation"
+msgstr "Лише висоти"
+
+msgid "Map content"
+msgstr "Вміст карти"

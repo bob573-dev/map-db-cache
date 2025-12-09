@@ -3,6 +3,7 @@ import time
 from typing import Callable
 
 from kivy.logger import Logger
+from kivy.clock import Clock
 
 from . import DEFAULT_CONNECTION_MAX_TIMEOUT
 from .exceptions import StopException, DownloadError
@@ -42,6 +43,10 @@ class MBTilesBuilderThreaded(MBTilesBuilder):
         self._is_running.clear()
         self._no_connection.clear()
 
+    @property
+    def is_running(self) -> bool:
+        return self._is_running.is_set()
+
     def get_approximate_size_mb_full(self, max_sample_count=5, **kwargs):
         setter_cb: Callable[[float], None] = kwargs.get('setter_cb')
         default_func = super().get_approximate_size_mb_full
@@ -52,10 +57,10 @@ class MBTilesBuilderThreaded(MBTilesBuilder):
                     self._reset_events()
                 result = default_func(_sample_count)
                 if setter_cb:
-                    setter_cb(result)
+                    Clock.schedule_once(lambda *_:setter_cb(result))
             except DownloadError:
                 if setter_cb:
-                    setter_cb(0)
+                    Clock.schedule_once(lambda *_: setter_cb(0))
             except StopException:
                 pass
 
@@ -101,9 +106,9 @@ class MBTilesBuilderThreaded(MBTilesBuilder):
                     default_func(_force)
                     self._call_success_cb()
                 except StopException:
-                    Logger.info('Run process was stopped')
+                    Logger.info('MBTilesBuilderThreaded: Run process was stopped')
                 except Exception as exc:
-                    Logger.exception('Run process was interrupted by exception.', exc_info=exc)
+                    Logger.exception('MBTilesBuilderThreaded: Run process was interrupted by exception.', exc_info=exc)
                     self._call_error_cb()
                 finally:
                     self._reset_events()
@@ -117,24 +122,24 @@ class MBTilesBuilderThreaded(MBTilesBuilder):
             ).start()
 
     def _call_progress_cb(self):
-        Logger.debug(f'progress {self._fetched_tiles}/{self._total_tiles}')
+        Logger.debug(f'MBTilesBuilderThreaded: progress {self._fetched_tiles}/{self._total_tiles}')
         if self._progress_cb:
             self._progress_cb(self._fetched_tiles, self._total_tiles)
 
     def _call_success_cb(self):
-        Logger.debug(f'successfully finished run process')
+        Logger.debug(f'MBTilesBuilderThreaded: successfully finished run process')
         if self._success_cb:
             self._success_cb()
 
     def _call_error_cb(self):
-        Logger.debug(f'error while run process')
+        Logger.debug(f'MBTilesBuilderThreaded: error while run process')
         if self._error_cb:
             self._error_cb()
 
     def _call_connection_lost_cb_once(self):
         if not self._no_connection.is_set():
             self._no_connection.set()
-            Logger.debug(f'lost connection')
+            Logger.debug(f'MBTilesBuilderThreaded: lost connection')
             if self._connection_lost_cb:
                 self._connection_lost_cb()
 
@@ -143,14 +148,17 @@ class MBTilesBuilderThreaded(MBTilesBuilder):
             self._final_cb()
 
     def pause(self):
-        Logger.info('Pause')
+        Logger.info('MBTilesBuilderThreaded: Pause')
         self._resume_event.clear()
 
     def resume(self):
-        Logger.info('Resume')
+        Logger.info('MBTilesBuilderThreaded: Resume')
         self._resume_event.set()
 
     def stop(self):
-        Logger.info('Stop')
+        Logger.info('MBTilesBuilderThreaded: Stop')
         self._stop_event.set()
         self._resume_event.set()
+
+
+__all__ = ['MBTilesBuilderThreaded']

@@ -2,3 +2,4 @@ kivy==2.3.1
 kivy_garden_mapview==1.0.6
 pillow==11.3.0
 pathvalidate==3.3.1
+appdirs==1.4.4

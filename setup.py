@@ -58,11 +58,11 @@ def _setup_cursor():
 def _setup_window(maximize):
     from kivy.config import Config
     Config.set('graphics', 'minimum_width', '860')
-    Config.set('graphics', 'minimum_height', '730')
+    Config.set('graphics', 'minimum_height', '794')
 
     if maximize:
         from kivy.core.window import Window
         Window.maximize()
     else:
         Config.set('graphics', 'width', '1024')
-        Config.set('graphics', 'height', '768')
+        Config.set('graphics', 'height', '800')

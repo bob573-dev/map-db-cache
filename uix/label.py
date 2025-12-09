@@ -35,11 +35,11 @@ class LabelValidatedAutoresized(LabelAutoresized):
         self.color = ERROR_COLOR if self.invalid else self.default_color
 
 
-class ProviderLabel(ButtonBehavior, Label):
+class DropdownLabel(ButtonBehavior, Label):
     def __init__(self, **kwargs):
         kwargs.setdefault('color', TEXT_COLOR)
         kwargs.setdefault('font_size', FONT_SIZE_SMALL)
-        super(ProviderLabel, self).__init__(**kwargs)
+        super(DropdownLabel, self).__init__(**kwargs)
         self.bind(width=self._update_text_size)
 
     def _update_text_size(self, *_):
@@ -49,5 +49,5 @@ class ProviderLabel(ButtonBehavior, Label):
 __all__ = [
     'LabelAutoresized',
     'LabelValidatedAutoresized',
-    'ProviderLabel'
+    'DropdownLabel',
 ]
