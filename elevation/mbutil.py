@@ -44,6 +44,8 @@ def merge_tif_with_mbtiles(
                 VALUES (?, ?, ?, ?, ?, ?, ?)""",
                 (min_lon, min_lat, max_lon, max_lat, "tif", tiff_source, blob_data),
             )
+            cur.close()
+        con.close()
 
         shutil.move(temp_mbtiles_file, mbtiles_file)
         if delete_tifffile:

@@ -3,7 +3,6 @@ import math
 import os
 import random
 import shutil
-import subprocess
 import threading
 import time
 import uuid
@@ -23,6 +22,7 @@ from . import DEFAULT_OUTPUT, MARGIN, DEFAULT_MAX_DOWNLOAD_TILES, SPOOL, CACHE, 
 from .mbutil import merge_tif_with_mbtiles
 from .sources import DEFAULT_PRODUCT, PRODUCTS_SPECS
 from .utils import build_bounds, ensure_setup, get_content_length
+from gdal_runner import run_gdal
 
 
 class ElevationBuilderThreaded:
@@ -45,7 +45,7 @@ class ElevationBuilderThreaded:
         self._chunk_size_bytes = 1024 * 64  # 64 KB
         self._default_one_tile_bytes = 4_300_000
         self._processing_coefficient = (
-            10  # indicates how much tile processing is heavier for progress than chunk downloading
+            15  # indicates how much tile processing is heavier for progress than chunk downloading
         )
 
         self._fetched_tiles_chunks = 0
@@ -55,7 +55,7 @@ class ElevationBuilderThreaded:
         self._total_tiles = 0
 
         self._default_time_to_download_one_chunk = 0.3  # TODO: it's mock for download_time calculation
-        self._default_process_time = 4  # TODO: it's mock for download_time calculation
+        self._default_process_time = 15  # TODO: it's mock for download_time calculation
         self._chunk_download_time_list = [self._default_time_to_download_one_chunk]
 
         self._resume_event = threading.Event()
@@ -212,7 +212,7 @@ class ElevationBuilderThreaded:
             str(vrt_path),
             *tif_files,
         ]
-        subprocess.run(cmd)
+        run_gdal(cmd)
         return vrt_path
 
     def _do_clip(
@@ -263,7 +263,7 @@ class ElevationBuilderThreaded:
             str(vrt_input),
             str(output),
         ]
-        subprocess.run(cmd)
+        run_gdal(cmd)
 
         rm_path = path / f"{product}.{run_id}.vrt"
         if rm_path.exists():
@@ -306,7 +306,8 @@ class ElevationBuilderThreaded:
         self._total_tiles = len(tiles_names)
 
         for tile_name in tiles_names:
-            url = f"{spec['datasource_url']}/{str(Path(tile_name).with_suffix(''))}{spec['compressed_ext']}"
+            tile = str(Path(tile_name).with_suffix('')).replace('\\', '/')
+            url = f"{spec['datasource_url']}/{tile}{spec['compressed_ext']}"
             length = get_content_length(url)
             result += math.ceil(length / self._chunk_size_bytes)
         self._total_tiles_chunks = result
@@ -400,6 +401,7 @@ class ElevationBuilderThreaded:
         spool/%tile_ext
         cache/%.tif
         """
+        tile_name = tile_name.replace('\\', '/')
         compressed_path = datasource_root / SPOOL / (tile_name + compressed_ext)
         raw_path = datasource_root / SPOOL / (tile_name + tile_ext)
         out_tif = datasource_root / CACHE / (tile_name + ".tif")
@@ -448,7 +450,7 @@ class ElevationBuilderThreaded:
                 str(raw_path),
                 str(out_tif),
             ]
-            subprocess.run(cmd)
+            run_gdal(cmd)
         self._tiles_processed += 1
 
         return out_tif.exists()

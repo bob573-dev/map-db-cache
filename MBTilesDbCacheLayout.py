@@ -33,6 +33,7 @@ from consts import (
     FONT_SIZE_SMALL,
 )
 from enums import MapContent
+from gdal_runner import check_gdal_installed
 from mbtiles import DEFAULT_TILES_SUBDOMAINS, DEFAULT_TILE_FORMAT, MAX_DOWNLOAD_TIME, DEFAULT_TIMEOUT
 from providers import PROVIDERS, BROWSER_USER_AGENT, DEFAULT_PROVIDER
 from tools.utils import format_seconds
@@ -512,9 +513,13 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
 
         container_layout.add_widget(source_input_layout)
 
+        map_content_options = MapContent.values()
+        if not check_gdal_installed():
+            map_content_options = [MapContent.ONLY_MAP]
+            self.map_content = MapContent.ONLY_MAP
         map_content_dropdown_layout = self._create_dropdown_layout(
             field='map_content',
-            options=MapContent.values(),
+            options=map_content_options,
             title=_('Map content'),
         )
         map_content_dropdown_layout.padding = (0, 10, 0, 0)

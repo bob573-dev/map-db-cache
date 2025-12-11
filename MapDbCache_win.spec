@@ -11,6 +11,7 @@ python_site_packages = Path(sys.executable).parent.parent / "Lib" / "site-packag
 binaries = []
 binaries += [(str(f), '.') for f in sdl2.dep_bins]
 binaries += [(str(f), '.') for f in glew.dep_bins]
+binaries += [('gdal_win_runner.exe', '.')]
 
 datas = [
     ('png', 'png'),

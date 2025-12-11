@@ -13,6 +13,8 @@ datas = [
     (str(python_site_packages / 'kivy_garden' / 'mapview' / 'icons'), 'kivy_garden/mapview/icons'),
     # Kivy fonts
     *[(str(f), "data/fonts") for f in (python_site_packages / "kivy" / "data" / "fonts").glob("*.ttf")],
+    # GDAL
+    ('./gdal_runner/gdal_linux', './gdal_runner/gdal_linux'),
 ]
 
 hiddenimports = [
