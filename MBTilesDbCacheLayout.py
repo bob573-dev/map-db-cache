@@ -33,7 +33,7 @@ from consts import (
     FONT_SIZE_SMALL,
 )
 from enums import MapContent
-from gdal_runner import check_gdal_installed
+from gdal_runner import GDALRunner
 from mbtiles import DEFAULT_TILES_SUBDOMAINS, DEFAULT_TILE_FORMAT, MAX_DOWNLOAD_TIME, DEFAULT_TIMEOUT
 from providers import PROVIDERS, BROWSER_USER_AGENT, DEFAULT_PROVIDER
 from tools.utils import format_seconds
@@ -83,6 +83,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
     progress = ListProperty([0, 0])
     approximate_size_mb = NumericProperty(0)
     time_to_download = NumericProperty(0)
+    gdal_installed = BooleanProperty(True)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -107,7 +108,10 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
         self.add_widget(self.map)
         self.add_widget(self._download_panel)
 
+        self._trigger_update_on_gdal_installed = Clock.create_trigger(self._update_on_gdal_installed)
+
         self.bind(
+            gdal_installed=self._trigger_update_on_gdal_installed,
             provider=self._update_on_provider,
             directory=self._update_filepath,
             file_basename=self._update_filepath,
@@ -115,6 +119,15 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
         )
         self.bind(map_content=self._update_max_size)
         self.bind(map_content=self._update_elevation_margin)
+        self.bind(map_content=self._trigger_update_on_gdal_installed)
+        GDALRunner().notify_is_installed_or_not(
+            lambda gdal_installed: self.setter('gdal_installed')(self, gdal_installed)
+        )
+
+    def _update_on_gdal_installed(self, *_):
+        if not self.gdal_installed and self.map_content != MapContent.ONLY_MAP:
+            self.map_content = MapContent.ONLY_MAP
+            self.show_gdal_not_installed_popup()
 
     def _update_on_provider(self, *_):
         if self.provider == self.custom_provider_key:
@@ -139,7 +152,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
     def _update_filepath(self, *_):
         if self.directory and self.file_basename:
             extension = '.tif' if self.map_content == MapContent.ONLY_ELEVATION else '.mbtiles'
-            self.filepath = str(Path(self.directory) / f'{self.file_basename}{extension}')
+            self.filepath = str((Path(self.directory) / f'{self.file_basename}{extension}').absolute())
         else:
             self.filepath = None
 
@@ -199,20 +212,18 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
             on_error=self.show_exception_popup,
         )
 
-    def show_exception_popup(self, *args):
+    def show_gdal_not_installed_popup(self, *args):
         self.info_popup.text = (
-            _('Elevation map downloading failed')
-            if self.map_content == MapContent.ONLY_ELEVATION
-            else _('Map downloading failed')
+            _('Elevation maps are not available.') + '\n' + _('Please report this issue to bob573@atomicmail.io')
         )
         self.info_popup.open()
 
+    def show_exception_popup(self, *args):
+        self.info_popup.text = _('Map downloading failed')
+        self.info_popup.open()
+
     def show_success_popup(self, *args):
-        self.info_popup.text = (
-            _('Elevation map downloading finished successfully')
-            if self.map_content == MapContent.ONLY_ELEVATION
-            else _('Map downloading finished successfully')
-        )
+        self.info_popup.text = _('Map downloading finished successfully')
         self.info_popup.open()
 
     def download_with_validation(self, *args):
@@ -433,6 +444,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
         def _update_side_input(*args):
             layout.title = _('Side length in km') + f' ({self.min_side}-{self.max_side})'
             layout.max_value = self.max_side
+
         _update_side_input()
         self.bind(
             max_side=_update_side_input,
@@ -514,7 +526,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
         container_layout.add_widget(source_input_layout)
 
         map_content_options = MapContent.values()
-        if not check_gdal_installed():
+        if not self.gdal_installed:
             map_content_options = [MapContent.ONLY_MAP]
             self.map_content = MapContent.ONLY_MAP
         map_content_dropdown_layout = self._create_dropdown_layout(

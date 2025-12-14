@@ -146,3 +146,9 @@ msgstr ""
 
 msgid "Map content"
 msgstr ""
+
+msgid "Elevation maps are not available."
+msgstr ""
+
+msgid "Please report this issue to bob573@atomicmail.io"
+msgstr ""

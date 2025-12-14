@@ -226,18 +226,22 @@ class MBTilesDbCache(EventDispatcher):
                 )
 
     def _update_time_to_download(self, *_):
-        mbtiles_time_to_download = (
-            self.builder.calculate_average_download_time(
-                reset=self.builder.is_running or self.time_to_download >= MAX_DOWNLOAD_TIME
+        if self.elevation_builder.is_running and not self.builder.is_running:
+            mbtiles_time_to_download = 0
+        else:
+            mbtiles_time_to_download = (
+                self.builder.calculate_average_download_time(
+                    reset=self.builder.is_running or self.time_to_download >= MAX_DOWNLOAD_TIME
+                )
+                if self.map_content != MapContent.ONLY_ELEVATION
+                else 0
             )
-            if self.map_content != MapContent.ONLY_ELEVATION
-            else 0
-        )
         elevation_time_to_download = (
             self.elevation_builder.calculate_average_time(self.bbox, margin=self.elevation_margin)
             if self.map_content != MapContent.ONLY_MAP
             else 0
         )
+
         self.time_to_download = mbtiles_time_to_download + elevation_time_to_download
 
     def _update_valid(self, *_):

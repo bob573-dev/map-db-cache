@@ -11,7 +11,6 @@ python_site_packages = Path(sys.executable).parent.parent / "Lib" / "site-packag
 binaries = []
 binaries += [(str(f), '.') for f in sdl2.dep_bins]
 binaries += [(str(f), '.') for f in glew.dep_bins]
-binaries += [('gdal_win_runner.exe', '.')]
 
 datas = [
     ('png', 'png'),
@@ -19,6 +18,8 @@ datas = [
     (str(python_site_packages / 'kivy_garden' / 'mapview' / 'icons'), 'kivy_garden/mapview/icons'),
     # Kivy fonts
     *[(str(f), "data/fonts") for f in (python_site_packages / "kivy" / "data" / "fonts").glob("*.ttf")],
+    # GDAL
+    ('./gdal_runner/gdal_win', './gdal_runner/gdal_win'),
 ]
 
 hiddenimports = [

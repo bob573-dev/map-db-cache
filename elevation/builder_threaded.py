@@ -22,7 +22,7 @@ from . import DEFAULT_OUTPUT, MARGIN, DEFAULT_MAX_DOWNLOAD_TILES, SPOOL, CACHE, 
 from .mbutil import merge_tif_with_mbtiles
 from .sources import DEFAULT_PRODUCT, PRODUCTS_SPECS
 from .utils import build_bounds, ensure_setup, get_content_length
-from gdal_runner import run_gdal
+from gdal_runner import GDALRunner
 
 
 class ElevationBuilderThreaded:
@@ -47,6 +47,8 @@ class ElevationBuilderThreaded:
         self._processing_coefficient = (
             15  # indicates how much tile processing is heavier for progress than chunk downloading
         )
+
+        self._gdal_runner = GDALRunner()
 
         self._fetched_tiles_chunks = 0
         self._total_tiles_chunks = 0
@@ -212,7 +214,7 @@ class ElevationBuilderThreaded:
             str(vrt_path),
             *tif_files,
         ]
-        run_gdal(cmd)
+        self._gdal_runner.run(cmd)
         return vrt_path
 
     def _do_clip(
@@ -263,7 +265,7 @@ class ElevationBuilderThreaded:
             str(vrt_input),
             str(output),
         ]
-        run_gdal(cmd)
+        self._gdal_runner.run(cmd)
 
         rm_path = path / f"{product}.{run_id}.vrt"
         if rm_path.exists():
@@ -450,7 +452,7 @@ class ElevationBuilderThreaded:
                 str(raw_path),
                 str(out_tif),
             ]
-            run_gdal(cmd)
+            self._gdal_runner.run(cmd)
         self._tiles_processed += 1
 
         return out_tif.exists()

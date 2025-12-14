@@ -3,7 +3,7 @@ echo Installing Python requirements...
 pip install pyinstaller==5.13.2
 
 echo "Building executable file..."
-python -m PyInstaller MapDbCache_win.spec --onefile
+python -m PyInstaller MapDbCache_win.spec
 
 move dist\MapDbCache.exe MapDbCache.exe
 echo Removing build artifacts...

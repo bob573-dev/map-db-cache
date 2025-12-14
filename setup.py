@@ -25,6 +25,7 @@ def setup():  # should be executed before any kivy import
     _setup_mouse()
     _setup_window(maximize)
     _setup_cursor()
+    _setup_gdal()
 
 
 def _setup_logging(level):
@@ -66,3 +67,8 @@ def _setup_window(maximize):
     else:
         Config.set('graphics', 'width', '1024')
         Config.set('graphics', 'height', '800')
+
+
+def _setup_gdal():
+    from gdal_runner import GDALRunner
+    GDALRunner()

@@ -21,5 +21,4 @@ python preview.py [path_to_file] (DEFAULT='map/map.mbtiles')
 # linux
 sh build.sh
 # windows
-build_gdal_win_runner.bat
 build.bat

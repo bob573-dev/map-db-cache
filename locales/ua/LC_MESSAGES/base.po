@@ -146,3 +146,9 @@ msgstr "Лише висоти"
 
 msgid "Map content"
 msgstr "Вміст карти"
+
+msgid "Elevation maps are not available."
+msgstr "Карти висот недоступні."
+
+msgid "Please report this issue to bob573@atomicmail.io"
+msgstr "Будь ласка, повідомте про цю проблему на bob573@atomicmail.io"
