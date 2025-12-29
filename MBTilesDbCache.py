@@ -283,6 +283,7 @@ class MBTilesDbCache(EventDispatcher):
             self.elevation_builder.merge_threaded(
                 self.bbox,
                 self.filepath,
+                max_zoom=self.zoom_to,
                 margin=self.elevation_margin,
                 success_cb=trigger_dispatch_on_success,
                 final_cb=trigger_set_finish_elevation,

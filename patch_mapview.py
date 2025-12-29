@@ -45,6 +45,38 @@ PATCHES = {
             'if not self.collide_point(*touch.pos):',
             'if not self.collide_point(*touch.pos) or self.disabled:',
         ),
+        (
+            '                # animate to the closest zoom\n',
+            '',
+        ),
+        (
+            '                zoom, scale = self._touch_zoom\n',
+            '',
+        ),
+        (
+            '                cur_zoom = self.zoom\n',
+            '',
+        ),
+        (
+            '                cur_scale = self._scale\n',
+            '',
+        ),
+        (
+            '                if cur_zoom < zoom or cur_scale < scale:\n',
+            '',
+        ),
+        (
+            '                    self.animated_diff_scale_at(1.0 - cur_scale, *touch.pos)\n',
+            '',
+        ),
+        (
+            '                elif cur_zoom > zoom or cur_scale > scale:\n',
+            '',
+        ),
+        (
+            '                    self.animated_diff_scale_at(2.0 - cur_scale, *touch.pos)\n',
+            '                # Buggy behaviour was removed\n',
+        ),
     ],
     inspect.getfile(Downloader): [
         (

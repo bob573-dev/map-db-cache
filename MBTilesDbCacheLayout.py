@@ -1,3 +1,4 @@
+import math
 import re
 from pathlib import Path
 
@@ -68,13 +69,13 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
     side = NumericProperty(defaultvalue=13, allownone=True)
     min_side = NumericProperty(1)
     max_side = NumericProperty(25)
-    max_side_elevation = NumericProperty(50)
+    max_side_elevation = NumericProperty(29)
     zoom = NumericProperty(defaultvalue=5)
     zoom_to = NumericProperty(16, allownone=True)
     min_zoom = NumericProperty(defaultvalue=DEFAULT_MIN_ZOOM)
     max_zoom = NumericProperty(defaultvalue=DEFAULT_MAX_ZOOM)
     bbox = ListProperty(None, allownone=True)
-    elevation_margin = StringProperty('33%')
+    elevation_margin = StringProperty('')
 
     directory = StringProperty(defaultvalue=DEFAULT_MAPS_DIRECTORY)
     file_basename = StringProperty(defaultvalue=DEFAULT_MAP_BASENAME)
@@ -119,7 +120,9 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
         )
         self.bind(map_content=self._update_max_size)
         self.bind(map_content=self._update_elevation_margin)
+        self.bind(side=self._update_elevation_margin)
         self.bind(map_content=self._trigger_update_on_gdal_installed)
+        self._update_elevation_margin()
         GDALRunner().notify_is_installed_or_not(
             lambda gdal_installed: self.setter('gdal_installed')(self, gdal_installed)
         )
@@ -166,10 +169,14 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
             self.max_side = max_side
 
     def _update_elevation_margin(self, *_):
+        if not self.side:
+            return
         if self.map_content == MapContent.ONLY_ELEVATION:
             self.elevation_margin = '0'
         else:
-            self.elevation_margin = MBTilesDbCacheLayout.elevation_margin.defaultvalue
+            side_elevation = 17.36 * math.log(1 + 0.15 * (self.side - 1)) + 3
+            margin = (side_elevation - self.side) / (2 * self.side) * 100
+            self.elevation_margin = f'{margin}%'
 
     def _create_directory_if_not_exists(self):
         Path(self.directory).mkdir(parents=True, exist_ok=True)

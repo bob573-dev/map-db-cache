@@ -3,6 +3,7 @@ import math
 import os
 import random
 import shutil
+import tempfile
 import threading
 import time
 import uuid
@@ -19,6 +20,7 @@ from mbtiles import DEFAULT_DOWNLOAD_RETRIES, DEFAULT_TIMEOUT
 from mbtiles.exceptions import DownloadError
 from mbtiles.exceptions import StopException
 from . import DEFAULT_OUTPUT, MARGIN, DEFAULT_MAX_DOWNLOAD_TILES, SPOOL, CACHE, CACHE_DIR
+from .layer_generator import LayerGenerator
 from .mbutil import merge_tif_with_mbtiles
 from .sources import DEFAULT_PRODUCT, PRODUCTS_SPECS
 from .utils import build_bounds, ensure_setup, get_content_length
@@ -49,6 +51,7 @@ class ElevationBuilderThreaded:
         )
 
         self._gdal_runner = GDALRunner()
+        self._layer_generator = LayerGenerator()
 
         self._fetched_tiles_chunks = 0
         self._total_tiles_chunks = 0
@@ -275,16 +278,26 @@ class ElevationBuilderThreaded:
         self,
         bounds,
         mbtiles_file,
+        max_zoom=14,
+        generate_layer=True,
         product=DEFAULT_PRODUCT,
         margin=MARGIN,
         **kwargs,
     ) -> None:
-        run_id = uuid.uuid4().hex
-        tifffile = str(Path(mbtiles_file).with_suffix(f'.tif.{run_id}'))
+        tifffile = tempfile.NamedTemporaryFile(suffix=".tif", delete=False).name
         self.clip(bounds, tifffile, margin, product=product, **kwargs)
 
         bounds = build_bounds(bounds, margin=margin)
-        merge_tif_with_mbtiles(bounds, tifffile, mbtiles_file, tiff_source=product, run_id=run_id, delete_tifffile=True)
+        merge_tif_with_mbtiles(bounds, tifffile, mbtiles_file, tiff_source=product)
+
+        if generate_layer:
+            layer_mbtiles = tempfile.NamedTemporaryFile(suffix=".mbtiles", delete=False).name
+            self._layer_generator.generate_layer(tifffile, layer_mbtiles, max_zoom=max_zoom)
+            self._layer_generator.add_layer(
+                target_mbtiles=mbtiles_file, layer_mbtiles=layer_mbtiles, name='Terrain', layer_source=product
+            )
+
+        os.remove(tifffile)
 
     def get_tile_names(
         self,

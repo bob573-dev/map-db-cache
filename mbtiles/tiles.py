@@ -16,7 +16,7 @@ from . import (DEFAULT_TILES_URL, DEFAULT_TILES_SUBDOMAINS,
                DEFAULT_DOWNLOAD_RETRIES, MAX_DOWNLOAD_TIME)
 from .cache import Disk, Dummy
 from .exceptions import EmptyCoverageError
-from .mbutil import disk_to_mbtiles
+from .mbutil import disk_to_mbtiles, prepare_metadata
 from .proj import GoogleProjection
 from .sources import TileDownloader, MBTilesReader
 from .utils import tile_to_latlon
@@ -292,21 +292,14 @@ class MBTilesBuilder(TilesManager):
             self._gather((z, x, y))
 
         # Some metadata
-        middlezoom = self.zoomlevels[len(self.zoomlevels) // 2]
-        lat = self.bbox_bounds[1] + (self.bbox_bounds[3] - self.bbox_bounds[1])/2
-        lon = self.bbox_bounds[0] + (self.bbox_bounds[2] - self.bbox_bounds[0])/2
-        metadata = {}
-        metadata['name'] = str(uuid.uuid4())
-        metadata['format'] = self._tile_extension[1:]
-        metadata['minzoom'] = self.zoomlevels[0]
-        metadata['maxzoom'] = self.zoomlevels[-1]
-        metadata['bounds'] = '%s,%s,%s,%s' % tuple(self.get_bounds())
-        metadata['center'] = '%s,%s,%s' % (lon, lat, middlezoom)
-        if self.attribution and self.use_attribution:
-            metadata['attribution'] = self.attribution
-        metadatafile = os.path.join(self.tmp_dir, 'metadata.json')
-        with open(metadatafile, 'w') as output:
-            json.dump(metadata, output)
+        prepare_metadata(
+            directory_path=self.tmp_dir,
+            minzoom=self.zoomlevels[0],
+            maxzoom=self.zoomlevels[-1],
+            bounds=self.get_bounds(),
+            format=self._tile_extension[1:],
+            attribution=self.attribution if self.attribution and self.use_attribution else None,
+        )
 
         # Package it!
         Logger.info(_("Build MBTiles file '%s'.") % self.filepath)

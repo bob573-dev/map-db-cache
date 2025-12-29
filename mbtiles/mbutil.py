@@ -10,6 +10,7 @@
 # https://github.com/mapbox/node-mbtiles/blob/master/lib/schema.sql
 
 import sqlite3, sys, logging, time, os, json, zlib, re
+import uuid
 
 from kivy.logger import Logger
 
@@ -17,22 +18,33 @@ from .utils import flip_y
 
 
 def mbtiles_setup(cur):
-    cur.execute("""
+    cur.execute(
+        """
         create table tiles (
             zoom_level integer,
             tile_column integer,
             tile_row integer,
             tile_data blob);
-            """)
-    cur.execute("""create table metadata
-        (name text, value text);""")
-    cur.execute("""CREATE TABLE grids (zoom_level integer, tile_column integer,
-    tile_row integer, grid blob);""")
-    cur.execute("""CREATE TABLE grid_data (zoom_level integer, tile_column
-    integer, tile_row integer, key_name text, key_json text);""")
+            """
+    )
+    cur.execute(
+        """create table metadata
+        (name text, value text);"""
+    )
+    cur.execute(
+        """CREATE TABLE grids (zoom_level integer, tile_column integer,
+    tile_row integer, grid blob);"""
+    )
+    cur.execute(
+        """CREATE TABLE grid_data (zoom_level integer, tile_column
+    integer, tile_row integer, key_name text, key_json text);"""
+    )
     cur.execute("""create unique index name on metadata (name);""")
-    cur.execute("""create unique index tile_index on tiles
-        (zoom_level, tile_column, tile_row);""")
+    cur.execute(
+        """create unique index tile_index on tiles
+        (zoom_level, tile_column, tile_row);"""
+    )
+
 
 def mbtiles_connect(mbtiles_file, silent):
     try:
@@ -44,32 +56,39 @@ def mbtiles_connect(mbtiles_file, silent):
             Logger.exception(e)
         raise e
 
+
 def optimize_connection(cur):
     cur.execute("""PRAGMA synchronous=0""")
     cur.execute("""PRAGMA locking_mode=EXCLUSIVE""")
     cur.execute("""PRAGMA journal_mode=DELETE""")
 
+
 def compression_prepare(cur, silent):
-    if not silent: 
+    if not silent:
         Logger.debug('Prepare database compression.')
-    cur.execute("""
+    cur.execute(
+        """
       CREATE TABLE if not exists images (
         tile_data blob,
         tile_id integer);
-    """)
-    cur.execute("""
+    """
+    )
+    cur.execute(
+        """
       CREATE TABLE if not exists map (
         zoom_level integer,
         tile_column integer,
         tile_row integer,
         tile_id integer);
-    """)
+    """
+    )
+
 
 def optimize_database(con, silent):
-    if not silent: 
+    if not silent:
         Logger.debug('analyzing db')
     con.execute("""ANALYZE;""")
-    if not silent: 
+    if not silent:
         Logger.debug('cleaning db')
 
     # Workaround for python>=3.6.0,python<3.6.2
@@ -78,6 +97,7 @@ def optimize_database(con, silent):
     con.execute("""VACUUM;""")
     con.isolation_level = ''  # reset default value of isolation_level
     con.commit()
+
 
 def compression_do(cur, con, chunk, silent):
     if not silent:
@@ -95,8 +115,11 @@ def compression_do(cur, con, chunk, silent):
         ids = []
         files = []
         start = time.time()
-        cur.execute("""select zoom_level, tile_column, tile_row, tile_data
-            from tiles where rowid > ? and rowid <= ?""", ((i * chunk), ((i + 1) * chunk)))
+        cur.execute(
+            """select zoom_level, tile_column, tile_row, tile_data
+            from tiles where rowid > ? and rowid <= ?""",
+            ((i * chunk), ((i + 1) * chunk)),
+        )
         rows = cur.fetchall()
         for r in rows:
             total = total + 1
@@ -126,27 +149,55 @@ def compression_do(cur, con, chunk, silent):
                 cur.execute(query, (r[0], r[1], r[2], last_id))
         con.commit()
 
+
 def compression_finalize(cur):
     Logger.debug('Finalizing database compression.')
     cur.execute("""drop table tiles;""")
-    cur.execute("""create view tiles as
+    cur.execute(
+        """create view tiles as
         select map.zoom_level as zoom_level,
         map.tile_column as tile_column,
         map.tile_row as tile_row,
         images.tile_data as tile_data FROM
-        map JOIN images on images.tile_id = map.tile_id;""")
-    cur.execute("""
+        map JOIN images on images.tile_id = map.tile_id;"""
+    )
+    cur.execute(
+        """
           CREATE UNIQUE INDEX map_index on map
-            (zoom_level, tile_column, tile_row);""")
-    cur.execute("""
+            (zoom_level, tile_column, tile_row);"""
+    )
+    cur.execute(
+        """
           CREATE UNIQUE INDEX images_id on images
-            (tile_id);""")
+            (tile_id);"""
+    )
     cur.execute("""vacuum;""")
     cur.execute("""analyze;""")
 
+
 def get_dirs(path):
-    return [name for name in os.listdir(path)
-        if os.path.isdir(os.path.join(path, name))]
+    return [name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name))]
+
+
+def prepare_metadata(directory_path, minzoom, maxzoom, bounds, format='png', attribution=None):
+    # Some metadata
+    middlezoom = (maxzoom + minzoom) // 2
+    min_lon, min_lat, max_lon, max_lat = bounds
+    lat = min_lat + (max_lat - min_lat) / 2
+    lon = min_lon + (max_lon - min_lon) / 2
+    metadata = {}
+    metadata["name"] = str(uuid.uuid4())
+    metadata["format"] = format
+    metadata["minzoom"] = minzoom
+    metadata["maxzoom"] = maxzoom
+    metadata["bounds"] = "%s,%s,%s,%s" % bounds
+    metadata["center"] = "%s,%s,%s" % (lon, lat, middlezoom)
+    if attribution:
+        metadata['attribution'] = attribution
+    metadatafile = os.path.join(directory_path, "metadata.json")
+    with open(metadatafile, "w") as output:
+        json.dump(metadata, output)
+
 
 def disk_to_mbtiles(directory_path, mbtiles_file, **kwargs):
 
@@ -160,19 +211,17 @@ def disk_to_mbtiles(directory_path, mbtiles_file, **kwargs):
     cur = con.cursor()
     optimize_connection(cur)
     mbtiles_setup(cur)
-    #~ image_format = 'png'
+    # ~ image_format = 'png'
     image_format = kwargs.get('format', 'png')
 
     try:
         metadata = json.load(open(os.path.join(directory_path, 'metadata.json'), 'r'))
-        image_format = kwargs.get('format')
         for name, value in metadata.items():
-            cur.execute('insert into metadata (name, value) values (?, ?)',
-                (name, value))
-        if not silent: 
+            cur.execute('insert into metadata (name, value) values (?, ?)', (name, value))
+        if not silent:
             Logger.info('metadata from metadata.json restored')
     except IOError:
-        if not silent: 
+        if not silent:
             Logger.warning('metadata.json not found')
 
     count = 0
@@ -182,15 +231,18 @@ def disk_to_mbtiles(directory_path, mbtiles_file, **kwargs):
     for zoom_dir in get_dirs(directory_path):
         if kwargs.get("scheme") == 'ags':
             if not "L" in zoom_dir:
-                if not silent: 
+                if not silent:
                     Logger.warning("You appear to be using an ags scheme on an non-arcgis Server cache.")
             z = int(zoom_dir.replace("L", ""))
         elif kwargs.get("scheme") == 'gwc':
-            z=int(zoom_dir[-2:])
+            z = int(zoom_dir[-2:])
         else:
             if "L" in zoom_dir:
-                if not silent: 
-                    Logger.warning("You appear to be using a %s scheme on an arcgis Server cache. Try using --scheme=ags instead" % kwargs.get("scheme"))
+                if not silent:
+                    Logger.warning(
+                        "You appear to be using a %s scheme on an arcgis Server cache. Try using --scheme=ags instead"
+                        % kwargs.get("scheme")
+                    )
             z = int(zoom_dir)
         for row_dir in get_dirs(os.path.join(directory_path, zoom_dir)):
             if kwargs.get("scheme") == 'ags':
@@ -203,7 +255,7 @@ def disk_to_mbtiles(directory_path, mbtiles_file, **kwargs):
                 if current_file == ".DS_Store" and not silent:
                     Logger.warning("Your OS is MacOS,and the .DS_Store file will be ignored.")
                 else:
-                    file_name, ext = current_file.split('.',1)
+                    file_name, ext = current_file.split('.', 1)
                     f = open(os.path.join(directory_path, zoom_dir, row_dir, current_file), 'rb')
                     file_content = f.read()
                     f.close()
@@ -218,18 +270,20 @@ def disk_to_mbtiles(directory_path, mbtiles_file, **kwargs):
                     else:
                         y = int(file_name)
 
-                    if (ext == image_format):
+                    if ext == image_format:
                         if not silent:
                             Logger.debug(' Read tile from Zoom (z): %i\tCol (x): %i\tRow (y): %i' % (z, x, y))
-                        cur.execute("""insert into tiles (zoom_level,
+                        cur.execute(
+                            """insert into tiles (zoom_level,
                             tile_column, tile_row, tile_data) values
                             (?, ?, ?, ?);""",
-                            (z, x, y, sqlite3.Binary(file_content)))
+                            (z, x, y, sqlite3.Binary(file_content)),
+                        )
                         count = count + 1
                         if (count % 100) == 0:
                             msg = "%s tiles inserted (%d tiles/sec)" % (count, count / (time.time() - start_time))
                             Logger.debug(msg)
-                    elif (ext == 'grid.json'):
+                    elif ext == 'grid.json':
                         if not silent:
                             Logger.debug(' Read grid from Zoom (z): %i\tCol (x): %i\tRow (y): %i' % (z, x, y))
                         # Remove potential callback with regex
@@ -241,11 +295,17 @@ def disk_to_mbtiles(directory_path, mbtiles_file, **kwargs):
 
                         data = utfgrid.pop('data')
                         compressed = zlib.compress(json.dumps(utfgrid).encode())
-                        cur.execute("""insert into grids (zoom_level, tile_column, tile_row, grid) values (?, ?, ?, ?) """, (z, x, y, sqlite3.Binary(compressed)))
+                        cur.execute(
+                            """insert into grids (zoom_level, tile_column, tile_row, grid) values (?, ?, ?, ?) """,
+                            (z, x, y, sqlite3.Binary(compressed)),
+                        )
                         grid_keys = [k for k in utfgrid['keys'] if k != ""]
                         for key_name in grid_keys:
                             key_json = data[key_name]
-                            cur.execute("""insert into grid_data (zoom_level, tile_column, tile_row, key_name, key_json) values (?, ?, ?, ?, ?);""", (z, x, y, key_name, json.dumps(key_json)))
+                            cur.execute(
+                                """insert into grid_data (zoom_level, tile_column, tile_row, key_name, key_json) values (?, ?, ?, ?, ?);""",
+                                (z, x, y, key_name, json.dumps(key_json)),
+                            )
     con.commit()
 
     if not silent:
@@ -259,6 +319,7 @@ def disk_to_mbtiles(directory_path, mbtiles_file, **kwargs):
     optimize_database(con, silent)
     con.close()
 
+
 def mbtiles_metadata_to_disk(mbtiles_file, **kwargs):
     silent = kwargs.get('silent')
     if not silent:
@@ -267,6 +328,7 @@ def mbtiles_metadata_to_disk(mbtiles_file, **kwargs):
     metadata = dict(con.execute('select name, value from metadata;').fetchall())
     if not silent:
         Logger.debug(json.dumps(metadata, indent=2))
+
 
 def mbtiles_to_disk(mbtiles_file, directory_path, **kwargs):
     silent = kwargs.get('silent')
@@ -288,7 +350,7 @@ def mbtiles_to_disk(mbtiles_file, directory_path, **kwargs):
     formatter = metadata.get('formatter')
     if formatter:
         layer_json = os.path.join(base_path, 'layer.json')
-        formatter_json = {"formatter":formatter}
+        formatter_json = {"formatter": formatter}
         open(layer_json, 'w').write(json.dumps(formatter_json))
 
     tiles = con.execute('select zoom_level, tile_column, tile_row, tile_data from tiles;')
@@ -301,26 +363,29 @@ def mbtiles_to_disk(mbtiles_file, directory_path, **kwargs):
             y = flip_y(y, z)
             tile_dir = os.path.join(base_path, str(z), str(x))
         elif kwargs.get('scheme') == 'wms':
-            tile_dir = os.path.join(base_path,
+            tile_dir = os.path.join(
+                base_path,
                 "%02d" % (z),
                 "%03d" % (int(x) / 1000000),
                 "%03d" % ((int(x) / 1000) % 1000),
                 "%03d" % (int(x) % 1000),
                 "%03d" % (int(y) / 1000000),
-                "%03d" % ((int(y) / 1000) % 1000))
+                "%03d" % ((int(y) / 1000) % 1000),
+            )
         else:
             tile_dir = os.path.join(base_path, str(z), str(x))
         if not os.path.isdir(tile_dir):
             os.makedirs(tile_dir)
         if kwargs.get('scheme') == 'wms':
-            tile = os.path.join(tile_dir,'%03d.%s' % (int(y) % 1000, kwargs.get('format', 'png')))
+            tile = os.path.join(tile_dir, '%03d.%s' % (int(y) % 1000, kwargs.get('format', 'png')))
         else:
-            tile = os.path.join(tile_dir,'%s.%s' % (y, kwargs.get('format', 'png')))
+            tile = os.path.join(tile_dir, '%s.%s' % (y, kwargs.get('format', 'png')))
         f = open(tile, 'wb')
         f.write(t[3])
         f.close()
         done = done + 1
-        for c in msg: sys.stdout.write(chr(8))
+        for c in msg:
+            sys.stdout.write(chr(8))
         if not silent:
             Logger.info('%s / %s tiles exported' % (done, count))
         t = tiles.fetchone()
@@ -334,22 +399,25 @@ def mbtiles_to_disk(mbtiles_file, directory_path, **kwargs):
         grids = con.execute('select zoom_level, tile_column, tile_row, grid from grids;')
         g = grids.fetchone()
     except sqlite3.OperationalError:
-        g = None # no grids table
+        g = None  # no grids table
     while g:
-        zoom_level = g[0] # z
-        tile_column = g[1] # x
-        y = g[2] # y
-        grid_data_cursor = con.execute('''select key_name, key_json FROM
+        zoom_level = g[0]  # z
+        tile_column = g[1]  # x
+        y = g[2]  # y
+        grid_data_cursor = con.execute(
+            '''select key_name, key_json FROM
             grid_data WHERE
             zoom_level = %(zoom_level)d and
             tile_column = %(tile_column)d and
-            tile_row = %(y)d;''' % locals() )
+            tile_row = %(y)d;'''
+            % locals()
+        )
         if kwargs.get('scheme') == 'xyz':
             y = flip_y(y, zoom_level)
         grid_dir = os.path.join(base_path, str(zoom_level), str(tile_column))
         if not os.path.isdir(grid_dir):
             os.makedirs(grid_dir)
-        grid = os.path.join(grid_dir,'%s.grid.json' % (y))
+        grid = os.path.join(grid_dir, '%s.grid.json' % (y))
         f = open(grid, 'w')
         grid_json = json.loads(zlib.decompress(g[3]).decode('utf-8'))
         # join up with the grid 'data' which is in pieces when stored in mbtiles file
@@ -365,7 +433,8 @@ def mbtiles_to_disk(mbtiles_file, directory_path, **kwargs):
             f.write('%s(%s);' % (callback, json.dumps(grid_json)))
         f.close()
         done = done + 1
-        for c in msg: sys.stdout.write(chr(8))
+        for c in msg:
+            sys.stdout.write(chr(8))
         if not silent:
             Logger.info('%s / %s grids exported' % (done, count))
         g = grids.fetchone()

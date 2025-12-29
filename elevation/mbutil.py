@@ -1,7 +1,6 @@
 import shutil
 import sqlite3
-import os
-import uuid
+import tempfile
 
 from kivy.logger import Logger
 
@@ -11,13 +10,10 @@ def merge_tif_with_mbtiles(
     tifffile_file,
     mbtiles_file,
     tiff_source=None,
-    run_id=None,
-    delete_tifffile: bool = False,
 ):
     min_lat, min_lon, max_lat, max_lon = bounds
     try:
-        run_id = run_id or uuid.uuid4().hex
-        temp_mbtiles_file = mbtiles_file + f'.{run_id}'
+        temp_mbtiles_file = tempfile.NamedTemporaryFile(suffix=".mbtiles", delete=False).name
         shutil.copy2(mbtiles_file, temp_mbtiles_file)
 
         with open(tifffile_file, "rb") as f:
@@ -48,8 +44,6 @@ def merge_tif_with_mbtiles(
         con.close()
 
         shutil.move(temp_mbtiles_file, mbtiles_file)
-        if delete_tifffile:
-            os.remove(tifffile_file)
 
     except Exception as e:
         Logger.error("Could not connect to database")
