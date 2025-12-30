@@ -15,6 +15,13 @@ class GDALRunner(metaclass=SingletonMeta):
     TOOLS = [
         ('gdal_translate', ['gdal_translate', '--version']),
         ('gdalbuildvrt', ['gdalbuildvrt', '--version']),
+        ('gdalwarp', ['gdalwarp', '--version']),
+        ('gdaldem', ['gdaldem', '--help']),
+        ('gdal_contour', ['gdal_contour', '--help']),
+        ('gdal_rasterize', ['gdal_rasterize', '--version']),
+        ('ogr2ogr', ['ogr2ogr', '--version']),
+        ('gdal_calc.py', ['gdal_calc.py', '--version']),
+        ('gdal2tiles.py', ['gdal2tiles.py', '--version']),
     ]
 
     def __init__(self):
