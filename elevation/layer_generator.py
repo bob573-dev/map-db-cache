@@ -209,7 +209,7 @@ class LayerGenerator:
         src: str,
         zoom: int,
     ):
-        if zoom > 16:  # todo: ou can split src and upscale separately if you want
+        if zoom > 16:  # todo: you can split src and upscale separately if you want
             raise ValueError('upscaling > 16 zoom level is restricted')
         src = Path(src)
         dst = src.with_suffix(f".contour_{zoom}.tif")
@@ -233,7 +233,7 @@ class LayerGenerator:
 
         w, h = cls.get_raster_size(
             src
-        )  # todo: цим можна порахувати максимальний скейл який можеш використати щоб не перевищити кількість пікселів
+        )  # todo: this can be used to calculate the maximum scale that can be used without exceeding the number of pixels
         subprocess.run(
             [
                 "gdalwarp",
@@ -257,15 +257,13 @@ class LayerGenerator:
         zoom: int,
         land_delta_h: float,
     ):
-        if zoom > 15:  # todo: ou can split src and upscale separately if you want
-            raise ValueError('upscaling > 16 zoom level is restricted')
         tif_file = Path(tif_file)
         folder = tif_file.parent  # todo: use temp dir here
         colored_tif = folder / f"colored_{zoom}.tif"
         hillshade_tif = folder / f"hillshade_{zoom}.tif"
         final_tif = folder / f"final_{zoom}.tif"
 
-        tif_file = cls.scale_to_zoom(tif_file, zoom + 1)  # todo: щоб було чіткіше +1
+        tif_file = cls.scale_to_zoom(tif_file, zoom + 1)
 
         subprocess.run(
             [
@@ -339,7 +337,7 @@ class LayerGenerator:
             elif land_delta_h >= 125:
                 line_step = 50
             else:
-                # todo: не додавай контруів взагалі
+                # todo: skip contour
                 line_step = 50
             line_step_thin = line_step / 5
 
@@ -565,7 +563,7 @@ class LayerGenerator:
             bounds = list(map(float, bounds_str.split(",")))
             update_metadata_field(temp_layer_mbtiles, 'bounds', bounds_str)
 
-            with open(temp_layer_mbtiles, "rb") as f:  # todo: read and write stream if possible
+            with open(temp_layer_mbtiles, "rb") as f:
                 blob_data = f.read()
 
             with sqlite3.connect(temp_target_mbtiles) as con:
