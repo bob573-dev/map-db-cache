@@ -183,3 +183,4 @@ map
 *.exe
 
 !gdal_runner/gdal_linux/lib
+!gdal_runner/gdal_linux/lib/*.so
