@@ -3,7 +3,6 @@ import math
 import os
 import shutil
 import sqlite3
-import subprocess
 import tempfile
 from dataclasses import dataclass
 from kivy.logger import Logger
@@ -15,6 +14,7 @@ from pyproj import CRS
 from pyproj import Geod
 
 from elevation.utils import get_geotiff_resolution, get_mbtiles_metadata, update_metadata_field
+from gdal_runner import GDALRunner
 from mbtiles.mbutil import disk_to_mbtiles, prepare_metadata
 
 
@@ -234,7 +234,7 @@ class LayerGenerator:
         w, h = cls.get_raster_size(
             src
         )  # todo: this can be used to calculate the maximum scale that can be used without exceeding the number of pixels
-        subprocess.run(
+        GDALRunner().run(
             [
                 "gdalwarp",
                 "-r",
@@ -244,8 +244,7 @@ class LayerGenerator:
                 str(h * scale),
                 str(src),
                 str(dst),
-            ],
-            check=True,
+            ]
         )
         return dst
 
@@ -265,7 +264,7 @@ class LayerGenerator:
 
         tif_file = cls.scale_to_zoom(tif_file, zoom + 1)
 
-        subprocess.run(
+        GDALRunner().run(
             [
                 "gdaldem",
                 "color-relief",
@@ -277,17 +276,15 @@ class LayerGenerator:
                 "TILED=YES",
                 "-co",
                 "COMPRESS=DEFLATE",
-            ],
-            check=True,
+            ]
         )
 
-        subprocess.run(
+        GDALRunner().run(
             [
                 "gdaldem",
                 "hillshade",
                 str(tif_file),
                 str(hillshade_tif),
-                # "-alpha",
                 "-az",
                 "315",
                 "-alt",
@@ -297,11 +294,10 @@ class LayerGenerator:
                 "TILED=YES",
                 "-co",
                 "COMPRESS=DEFLATE",
-            ],
-            check=True,
+            ]
         )
 
-        subprocess.run(
+        GDALRunner().run(
             [
                 "gdal_calc.py",
                 "-A",
@@ -317,8 +313,7 @@ class LayerGenerator:
                 "TILED=YES",
                 "--co",
                 "COMPRESS=DEFLATE",
-            ],
-            check=True,
+            ]
         )
 
         if zoom in (13, 14):
@@ -341,46 +336,42 @@ class LayerGenerator:
                 line_step = 50
             line_step_thin = line_step / 5
 
-            subprocess.run(
+            GDALRunner().run(
                 [
                     "gdal_contour",
                     "-a",
                     "elev",
                     "-i",
-                    str(line_step_thin),  # інтервал ізоліній, напр. 50 м
+                    str(line_step_thin),
                     str(tif_file),
                     str(contour_geojson),
-                ],
-                check=True,
+                ]
             )
 
-            subprocess.run(
+            GDALRunner().run(
                 [
                     "ogr2ogr",
                     str(thick_geojson),
                     str(contour_geojson),
                     "-where",
                     f"elev % {line_step} = 0",
-                ],
-                check=True,
+                ]
             )
 
-            subprocess.run(
+            GDALRunner().run(
                 [
                     "ogr2ogr",
                     str(thin_geojson),
                     str(contour_geojson),
                     "-where",
                     f"elev % {line_step} != 0",
-                ],
-                check=True,
+                ]
             )
             pixel_degree_size, bounds, center = get_geotiff_resolution(tif_file)
             thick_size = pixel_degree_size[0]
-            # thin_size = pixel_degree_size[0] /1.5
             thin_size = pixel_degree_size[0] / 1.2
 
-            subprocess.run(
+            GDALRunner().run(
                 [
                     "ogr2ogr",
                     str(thick_geojson_buf),
@@ -389,11 +380,10 @@ class LayerGenerator:
                     "sqlite",
                     "-sql",
                     f"SELECT elev, ST_Buffer(geometry, {thick_size}) AS geometry FROM contour",
-                ],
-                check=True,
+                ]
             )
 
-            subprocess.run(
+            GDALRunner().run(
                 [
                     "ogr2ogr",
                     str(thin_geojson_buf),
@@ -402,67 +392,59 @@ class LayerGenerator:
                     "sqlite",
                     "-sql",
                     f"SELECT elev, ST_Buffer(geometry, {thin_size}) AS geometry FROM contour",
-                ],
-                check=True,
+                ]
             )
 
-            subprocess.run(
+            GDALRunner().run(
                 [
                     "gdal_rasterize",
                     "-burn",
-                    "255",  # чорні лінії
-                    # "-l", 'asdf',
+                    "255",
                     "-l",
                     "contour",
                     "-tr",
                     str(pixel_degree_size[0]),
-                    str(pixel_degree_size[1]),  # або узгодь з DEM
+                    str(pixel_degree_size[1]),
                     "-te",
                     str(bounds[0]),
                     str(bounds[1]),
                     str(bounds[2]),
-                    str(bounds[3]),  # або узгодь з DEM
-                    # "-te", str(xmin), str(ymin), str(xmax), str(ymax),       # або узгодь з DEM
+                    str(bounds[3]),
                     "-ot",
                     "Byte",
                     "-of",
                     "GTiff",
-                    # str(thick_geojson),
                     str(thick_geojson_buf),
                     str(thick_tif),
-                ],
-                check=True,
+                ]
             )
 
-            subprocess.run(
+            GDALRunner().run(
                 [
                     "gdal_rasterize",
                     "-burn",
-                    "200",  # чорні лінії
-                    # "-l", 'asdf',
+                    "200",
                     "-l",
                     "contour",
                     "-tr",
                     str(pixel_degree_size[0]),
-                    str(pixel_degree_size[1]),  # або узгодь з DEM
+                    str(pixel_degree_size[1]),
                     "-te",
                     str(bounds[0]),
                     str(bounds[1]),
                     str(bounds[2]),
-                    str(bounds[3]),  # або узгодь з DEM
-                    # "-te", str(xmin), str(ymin), str(xmax), str(ymax),       # або узгодь з DEM
+                    str(bounds[3]),
                     "-ot",
                     "Byte",
                     "-of",
                     "GTiff",
                     str(thin_geojson_buf),
                     str(thin_tif),
-                ],
-                check=True,
+                ]
             )
 
             final_tif_temp = final_tif.parent / f'final_temp_{zoom}.tif'
-            subprocess.run(
+            GDALRunner().run(
                 [
                     "gdal_calc.py",
                     "-A",
@@ -472,7 +454,6 @@ class LayerGenerator:
                     "-C",
                     str(thick_tif),
                     "--calc=where(C==255,35,where(B==200,60,A))",
-                    # "--calc=where(C==255,0,where(B==200,0,A))",
                     "--allBands=A",
                     "--type=Byte",
                     "--outfile",
@@ -481,26 +462,21 @@ class LayerGenerator:
                     "TILED=YES",
                     "--co",
                     "COMPRESS=DEFLATE",
-                ],
-                check=True,
+                ]
             )
             final_tif = final_tif_temp
 
         tiles_path = folder / "tiles"
-        # if tiles_path.exists():
-        #     os.rmdir(tiles_path)
         tiles_path.mkdir(exist_ok=True)
 
-        subprocess.run(
+        GDALRunner().run(
             [
                 "gdal2tiles.py",
                 "-z",
                 str(zoom),
-                # "--resampling=average",
                 str(final_tif),
                 str(tiles_path),
-            ],
-            check=True,
+            ]
         )
         return tiles_path
 
@@ -513,9 +489,7 @@ class LayerGenerator:
         crs = CRS.from_epsg(3857)
         circumference_lat = 2 * math.pi * crs.get_geod().a * math.cos(math.radians(lat))
 
-        # native zoom
         native_zoom = math.ceil(math.log2(circumference_lat / (size_in_m[0] * 256)))
-        print("Native zoom:", native_zoom)
         return native_zoom
 
     @staticmethod
@@ -523,22 +497,17 @@ class LayerGenerator:
 
         geod = Geod(ellps="WGS84")
         lat, lon = center_coords
-        # крок у градусах
         pixel_size_deg_lat, pixel_size_deg_lon = pixel_size_degree
 
-        # знаходимо довжину у метрах вздовж широти
         x0, y0 = lon, lat
         x1, y1 = lon + pixel_size_deg_lon, lat
 
-        # dist у метрах
         az12, az21, dist_x = geod.inv(x0, y0, x1, y1)
 
-        # вздовж довго
         x0, y0 = lon, lat
         x1, y1 = lon, lat + pixel_size_deg_lat
         az12, az21, dist_y = geod.inv(x0, y0, x1, y1)
 
-        print("Pixel size in meters:", dist_x, dist_y)
         return (dist_x, dist_y)
 
     @staticmethod
