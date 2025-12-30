@@ -181,3 +181,5 @@ cache
 cached_tiles
 map
 *.exe
+
+!gdal_runner/gdal_linux/*.so
