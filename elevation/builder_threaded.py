@@ -293,6 +293,7 @@ class ElevationBuilderThreaded:
         if generate_layer:
             layer_mbtiles = tempfile.NamedTemporaryFile(suffix=".mbtiles", delete=False).name
             self._layer_generator.generate_layer(tifffile, layer_mbtiles, max_zoom=max_zoom)
+
             self._layer_generator.add_layer(
                 target_mbtiles=mbtiles_file, layer_mbtiles=layer_mbtiles, name='Terrain', layer_source=product
             )

@@ -1,0 +1,16 @@
+mirrors-lst
+	https://download.osgeo.org/osgeo4w/v2/;OSGeo;USA;Oregon
+	https://ftp.osuosl.org/pub/osgeo/download/osgeo4w/v2/;OSL;USA;Oregon
+	https://www.norbit.de/osgeo4w/v2/;norBIT GmbH;Germany;Niedersachsen
+window-placement
+	44,0,0,0,0,0,0,0,1,0,0,0,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,210,1,0,0,131,0,0,0,210,4,0,0,231,2,0,0
+last-mode
+	Advanced
+last-mirror
+	https://ftp.osuosl.org/pub/osgeo/download/osgeo4w/v2/
+net-method
+	IE
+last-cache
+	C:\Users\pajyloy\AppData\Local\Temp
+last-menu-name
+	OSGeo4W

@@ -1,0 +1,2 @@
+iswindows8orgreater
+if errorlevel 1 ren bin\api-ms-win-core-path-l1-1-0.dll.w7 api-ms-win-core-path-l1-1-0.dll

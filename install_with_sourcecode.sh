@@ -16,6 +16,8 @@ if [ -f requirements.txt ]; then
     . .venv/bin/activate
     pip install -r requirements.txt
     python3 patch_mapview.py
+    pip install numpy>1.0.0 wheel setuptools>=67
+    pip install gdal[numpy]=="$(gdal-config --version).*"
 else
     echo "requirements.txt not found."
     exit 1

@@ -5,8 +5,8 @@ import shutil
 import sqlite3
 import tempfile
 from dataclasses import dataclass
-from kivy.logger import Logger
 from pathlib import Path
+from kivy.logger import Logger
 
 import numpy as np
 from PIL import Image
@@ -16,6 +16,8 @@ from pyproj import Geod
 from elevation.utils import get_geotiff_resolution, get_mbtiles_metadata, update_metadata_field
 from gdal_runner import GDALRunner
 from mbtiles.mbutil import disk_to_mbtiles, prepare_metadata
+
+from utils import is_win_platform
 
 
 @dataclass
@@ -240,8 +242,8 @@ class LayerGenerator:
                 "-r",
                 "cubic",
                 "-ts",
-                str(w * scale),
-                str(h * scale),
+                str(math.ceil(w * scale)),
+                str(math.ceil(h * scale)),
                 str(src),
                 str(dst),
             ]
@@ -297,7 +299,7 @@ class LayerGenerator:
             ]
         )
 
-        GDALRunner().run(
+        GDALRunner().gdal_calc(
             [
                 "gdal_calc.py",
                 "-A",
@@ -316,7 +318,7 @@ class LayerGenerator:
             ]
         )
 
-        if zoom in (13, 14):
+        if zoom in (13, 14) and not is_win_platform():
             contour_geojson = folder / f"contour_{zoom}.geojson"
             thick_geojson = folder / f"thick_contour_{zoom}.geojson"
             thick_geojson_buf = folder / f"thick_contour_buf_{zoom}.geojson"
@@ -444,7 +446,7 @@ class LayerGenerator:
             )
 
             final_tif_temp = final_tif.parent / f'final_temp_{zoom}.tif'
-            GDALRunner().run(
+            GDALRunner().gdal_calc(
                 [
                     "gdal_calc.py",
                     "-A",
@@ -469,7 +471,7 @@ class LayerGenerator:
         tiles_path = folder / "tiles"
         tiles_path.mkdir(exist_ok=True)
 
-        GDALRunner().run(
+        GDALRunner().gdal2tiles(
             [
                 "gdal2tiles.py",
                 "-z",

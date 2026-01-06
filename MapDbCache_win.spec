@@ -4,9 +4,12 @@ import sys
 from pathlib import Path
 from kivy_deps import sdl2, glew
 
+from PyInstaller.utils.hooks import collect_submodules
+from PyInstaller.utils.hooks import collect_dynamic_libs
+
 block_cipher = None
 
-python_site_packages = Path(sys.executable).parent.parent / "Lib" / "site-packages"
+python_site_packages = Path(sys.executable).parent.parent.parent / "Python312" / "Lib" / "site-packages"
 
 binaries = []
 binaries += [(str(f), '.') for f in sdl2.dep_bins]
@@ -19,7 +22,7 @@ datas = [
     # Kivy fonts
     *[(str(f), "data/fonts") for f in (python_site_packages / "kivy" / "data" / "fonts").glob("*.ttf")],
     # GDAL
-    ('./gdal_runner/gdal_win', './gdal_runner/gdal_win'),
+    ('./gdal_runner/gdal_win/OSGeo4W', './gdal_runner/gdal_win/OSGeo4W'),
 ]
 
 hiddenimports = [
@@ -27,6 +30,15 @@ hiddenimports = [
     'kivy_garden.mapview.tilesource',
     'kivy_garden.mapview.providers',
     'win32timezone',
+    'osgeo',
+    'osgeo.gdal',
+    'osgeo.ogr',
+    'osgeo.osr',
+    *collect_submodules("osgeo"),
+    'osgeo_utils',
+    'osgeo_utils.gdal2tiles',
+    'osgeo_utils.gdal_calc',
+    'osgeo_utils.auxiliary',
 ]
 
 a = Analysis(
