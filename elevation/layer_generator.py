@@ -214,7 +214,7 @@ class LayerGenerator:
         if zoom > 16:  # todo: you can split src and upscale separately if you want
             raise ValueError('upscaling > 16 zoom level is restricted')
         src = Path(src)
-        dst = src.with_suffix(f".contour_{zoom}.tif")
+        dst = src.with_suffix(f".scale_{zoom}.tif")
         if dst.exists():
             os.remove(dst)
         pixel_degree_size, bounds, center = get_geotiff_resolution(src)
@@ -263,6 +263,7 @@ class LayerGenerator:
         colored_tif = folder / f"colored_{zoom}.tif"
         hillshade_tif = folder / f"hillshade_{zoom}.tif"
         final_tif = folder / f"final_{zoom}.tif"
+        final_compressed_tif = folder / f"final_compressed_{zoom}.tif"
 
         tif_file = cls.scale_to_zoom(tif_file, zoom + 1)
 
@@ -274,10 +275,6 @@ class LayerGenerator:
                 str(color_file),
                 str(colored_tif),
                 "-nearest_color_entry",
-                "-co",
-                "TILED=YES",
-                "-co",
-                "COMPRESS=DEFLATE",
             ]
         )
 
@@ -295,10 +292,6 @@ class LayerGenerator:
                 "-z",
                 "10",
                 "-compute_edges",
-                "-co",
-                "TILED=YES",
-                "-co",
-                "COMPRESS=DEFLATE",
             ]
         )
 
@@ -314,162 +307,25 @@ class LayerGenerator:
                 "--type=Byte",
                 "--outfile",
                 str(final_tif),
-                "--co",
-                "TILED=YES",
-                "--co",
-                "COMPRESS=DEFLATE",
             ]
         )
 
         if zoom in (13, 14) and not is_win_platform():
-            contour_geojson = folder / f"contour_{zoom}.geojson"
-            thick_geojson = folder / f"thick_contour_{zoom}.geojson"
-            thick_geojson_buf = folder / f"thick_contour_buf_{zoom}.geojson"
-            thick_tif = folder / f"thick_contour_{zoom}.tif"
-            thin_geojson = folder / f"thin_contour_{zoom}.geojson"
-            thin_geojson_buf = folder / f"thin_contour_buf_{zoom}.geojson"
-            thin_tif = folder / f"thin_contour_{zoom}.tif"
+            final_tif = cls.add_contour(tif_file, final_tif, zoom, land_delta_h)
 
-            if land_delta_h >= 500:
-                line_step = 200
-            elif land_delta_h >= 250:
-                line_step = 100
-            elif land_delta_h >= 125:
-                line_step = 50
-            else:
-                # todo: skip contour
-                line_step = 50
-            line_step_thin = line_step / 5
-
-            GDALRunner().run(
-                [
-                    "gdal_contour",
-                    "-a",
-                    "elev",
-                    "-i",
-                    str(line_step_thin),
-                    str(tif_file),
-                    str(contour_geojson),
-                ]
-            )
-
-            GDALRunner().run(
-                [
-                    "ogr2ogr",
-                    str(thick_geojson),
-                    str(contour_geojson),
-                    "-where",
-                    f"elev % {line_step} = 0",
-                ]
-            )
-
-            GDALRunner().run(
-                [
-                    "ogr2ogr",
-                    str(thin_geojson),
-                    str(contour_geojson),
-                    "-where",
-                    f"elev % {line_step} != 0",
-                ]
-            )
-            pixel_degree_size, bounds, center = get_geotiff_resolution(tif_file)
-            thick_size = pixel_degree_size[0]
-            thin_size = pixel_degree_size[0] / 1.2
-
-            GDALRunner().run(
-                [
-                    "ogr2ogr",
-                    str(thick_geojson_buf),
-                    str(thick_geojson),
-                    "-dialect",
-                    "sqlite",
-                    "-sql",
-                    f"SELECT elev, ST_Buffer(geometry, {thick_size}) AS geometry FROM contour",
-                ]
-            )
-
-            GDALRunner().run(
-                [
-                    "ogr2ogr",
-                    str(thin_geojson_buf),
-                    str(thin_geojson),
-                    "-dialect",
-                    "sqlite",
-                    "-sql",
-                    f"SELECT elev, ST_Buffer(geometry, {thin_size}) AS geometry FROM contour",
-                ]
-            )
-
-            GDALRunner().run(
-                [
-                    "gdal_rasterize",
-                    "-burn",
-                    "255",
-                    "-l",
-                    "contour",
-                    "-tr",
-                    str(pixel_degree_size[0]),
-                    str(pixel_degree_size[1]),
-                    "-te",
-                    str(bounds[0]),
-                    str(bounds[1]),
-                    str(bounds[2]),
-                    str(bounds[3]),
-                    "-ot",
-                    "Byte",
-                    "-of",
-                    "GTiff",
-                    str(thick_geojson_buf),
-                    str(thick_tif),
-                ]
-            )
-
-            GDALRunner().run(
-                [
-                    "gdal_rasterize",
-                    "-burn",
-                    "200",
-                    "-l",
-                    "contour",
-                    "-tr",
-                    str(pixel_degree_size[0]),
-                    str(pixel_degree_size[1]),
-                    "-te",
-                    str(bounds[0]),
-                    str(bounds[1]),
-                    str(bounds[2]),
-                    str(bounds[3]),
-                    "-ot",
-                    "Byte",
-                    "-of",
-                    "GTiff",
-                    str(thin_geojson_buf),
-                    str(thin_tif),
-                ]
-            )
-
-            final_tif_temp = final_tif.parent / f'final_temp_{zoom}.tif'
-            GDALRunner().gdal_calc(
-                [
-                    "gdal_calc.py",
-                    "-A",
-                    str(final_tif),
-                    "-B",
-                    str(thin_tif),
-                    "-C",
-                    str(thick_tif),
-                    "--calc=where(C==255,35,where(B==200,60,A))",
-                    "--allBands=A",
-                    "--type=Byte",
-                    "--outfile",
-                    str(final_tif_temp),
-                    "--co",
-                    "TILED=YES",
-                    "--co",
-                    "COMPRESS=DEFLATE",
-                ]
-            )
-            final_tif = final_tif_temp
+        GDALRunner().run(
+            [
+                "gdal_translate",
+                "-co",
+                "COMPRESS=DEFLATE",
+                "-co",
+                "TILED=YES",
+                "-co",
+                "PREDICTOR=2",
+                str(final_tif),
+                str(final_compressed_tif),
+            ]
+        )
 
         tiles_path = folder / "tiles"
         tiles_path.mkdir(exist_ok=True)
@@ -479,11 +335,167 @@ class LayerGenerator:
                 "gdal2tiles.py",
                 "-z",
                 str(zoom),
-                str(final_tif),
+                str(final_compressed_tif),
                 str(tiles_path),
             ]
         )
         return tiles_path
+
+    @staticmethod
+    def add_contour(
+        dem_tif: str,
+        target_tif: str,
+        zoom: int,
+        land_delta_h: float,
+    ):
+        dem_tif = Path(dem_tif)
+        folder = dem_tif.parent  # todo: use temp dir here
+        target_tif_result = folder / f"target_tif_result_{zoom}.tif"
+        contour_geojson = folder / f"contour_{zoom}.geojson"
+
+        thick_geojson = folder / f"thick_contour_{zoom}.geojson"
+        thick_geojson_buf = folder / f"thick_contour_buf_{zoom}.geojson"
+        thick_tif = folder / f"thick_contour_{zoom}.tif"
+
+        thin_geojson = folder / f"thin_contour_{zoom}.geojson"
+        thin_geojson_buf = folder / f"thin_contour_buf_{zoom}.geojson"
+        thin_tif = folder / f"thin_contour_{zoom}.tif"
+
+        if land_delta_h >= 500:
+            line_step = 200
+        elif land_delta_h >= 250:
+            line_step = 100
+        elif land_delta_h >= 125:
+            line_step = 50
+        else:
+            # todo: skip contour
+            line_step = 50
+        line_step_thin = line_step / 5
+
+        GDALRunner().run(
+            [
+                "gdal_contour",
+                "-a",
+                "elev",
+                "-i",
+                str(line_step_thin),
+                str(dem_tif),
+                str(contour_geojson),
+            ]
+        )
+
+        GDALRunner().run(
+            [
+                "ogr2ogr",
+                str(thick_geojson),
+                str(contour_geojson),
+                "-where",
+                f"elev % {line_step} = 0",
+            ]
+        )
+
+        GDALRunner().run(
+            [
+                "ogr2ogr",
+                str(thin_geojson),
+                str(contour_geojson),
+                "-where",
+                f"elev % {line_step} != 0",
+            ]
+        )
+        pixel_degree_size, bounds, center = get_geotiff_resolution(dem_tif)
+        thick_size = pixel_degree_size[0]
+        thin_size = pixel_degree_size[0] / 1.2
+
+        GDALRunner().run(
+            [
+                "ogr2ogr",
+                str(thick_geojson_buf),
+                str(thick_geojson),
+                "-dialect",
+                "sqlite",
+                "-sql",
+                f"SELECT elev, ST_Buffer(geometry, {thick_size}) AS geometry FROM contour",
+            ]
+        )
+
+        GDALRunner().run(
+            [
+                "ogr2ogr",
+                str(thin_geojson_buf),
+                str(thin_geojson),
+                "-dialect",
+                "sqlite",
+                "-sql",
+                f"SELECT elev, ST_Buffer(geometry, {thin_size}) AS geometry FROM contour",
+            ]
+        )
+
+        GDALRunner().run(
+            [
+                "gdal_rasterize",
+                "-burn",
+                "255",
+                "-l",
+                "contour",
+                "-tr",
+                str(pixel_degree_size[0]),
+                str(pixel_degree_size[1]),
+                "-te",
+                str(bounds[0]),
+                str(bounds[1]),
+                str(bounds[2]),
+                str(bounds[3]),
+                "-ot",
+                "Byte",
+                "-of",
+                "GTiff",
+                str(thick_geojson_buf),
+                str(thick_tif),
+            ]
+        )
+
+        GDALRunner().run(
+            [
+                "gdal_rasterize",
+                "-burn",
+                "200",
+                "-l",
+                "contour",
+                "-tr",
+                str(pixel_degree_size[0]),
+                str(pixel_degree_size[1]),
+                "-te",
+                str(bounds[0]),
+                str(bounds[1]),
+                str(bounds[2]),
+                str(bounds[3]),
+                "-ot",
+                "Byte",
+                "-of",
+                "GTiff",
+                str(thin_geojson_buf),
+                str(thin_tif),
+            ]
+        )
+
+        GDALRunner().gdal_calc(
+            [
+                "gdal_calc.py",
+                "-A",
+                str(target_tif),
+                "-B",
+                str(thin_tif),
+                "-C",
+                str(thick_tif),
+                "--calc=where(C==255,35,where(B==200,60,A))",
+                "--allBands=A",
+                "--type=Byte",
+                "--outfile",
+                str(target_tif_result),
+            ]
+        )
+        return target_tif_result
 
     @classmethod
     def get_geotiff_native_zoom(cls, path: str, pixel_size_degree: tuple, center_coords: tuple = (50, 23)) -> int:
