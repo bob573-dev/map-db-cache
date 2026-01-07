@@ -1,6 +1,7 @@
 import subprocess
 from pathlib import Path
 import threading
+import os
 
 from kivy.clock import Clock
 from kivy.logger import Logger
@@ -13,7 +14,8 @@ try:
 
     from osgeo_utils.gdal2tiles import *  # noqa
     from osgeo_utils.gdal2tiles import main as gdal2tiles_main
-except ImportError:
+except ImportError as exc:
+    Logger.exception(exc, exc_info=True)
     gdal_calc_main = None
     gdal2tiles_main = None
 
@@ -59,10 +61,6 @@ class GDALRunner(metaclass=SingletonMeta):
             self._subprocess_kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
 
         self._run_setup_process()
-
-    @property
-    def is_running_in_bundle(self):
-        return getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
 
     def _run_setup_process(self):
         def target():

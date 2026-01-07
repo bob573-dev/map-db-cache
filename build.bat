@@ -4,7 +4,7 @@ setlocal
 set SCRIPT_DIR=%~dp0
 set SCRIPT_DIR=%SCRIPT_DIR:~0,-1%
 set PYTHONHOME=%SCRIPT_DIR%\gdal_runner\gdal_win\Python312
-set PYTHON_EXE=%SCRIPT_DIR%\gdal_runner\gdal_win\OSGeo4W_\bin\python.exe
+set PYTHON_EXE=%SCRIPT_DIR%\gdal_runner\gdal_win\OSGeo4W\bin\python.exe
 
 echo Using Python: "%PYTHON_EXE%"
 
