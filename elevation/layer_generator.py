@@ -17,8 +17,6 @@ from elevation.utils import get_geotiff_resolution, get_mbtiles_metadata, update
 from gdal_runner import GDALRunner
 from mbtiles.mbutil import disk_to_mbtiles, prepare_metadata
 
-from utils import is_win_platform
-
 
 @dataclass
 class LayerGenerator:
@@ -265,7 +263,10 @@ class LayerGenerator:
         final_tif = folder / f"final_{zoom}.tif"
         final_compressed_tif = folder / f"final_compressed_{zoom}.tif"
 
-        tif_file = cls.scale_to_zoom(tif_file, zoom + 1)
+        if zoom in (13, 14):
+            tif_file = cls.scale_to_zoom(tif_file, zoom + 2)
+        else:
+            tif_file = cls.scale_to_zoom(tif_file, zoom + 1)
 
         GDALRunner().run(
             [
@@ -310,7 +311,7 @@ class LayerGenerator:
             ]
         )
 
-        if zoom in (13, 14) and not is_win_platform():
+        if zoom in (13, 14):
             final_tif = cls.add_contour(tif_file, final_tif, zoom, land_delta_h)
 
         GDALRunner().run(
@@ -350,16 +351,21 @@ class LayerGenerator:
     ):
         dem_tif = Path(dem_tif)
         folder = dem_tif.parent  # todo: use temp dir here
-        target_tif_result = folder / f"target_tif_result_{zoom}.tif"
+        target_tif_final = folder / f"target_tif_final_{zoom}.tif"
         contour_geojson = folder / f"contour_{zoom}.geojson"
 
         thick_geojson = folder / f"thick_contour_{zoom}.geojson"
-        thick_geojson_buf = folder / f"thick_contour_buf_{zoom}.geojson"
         thick_tif = folder / f"thick_contour_{zoom}.tif"
-
         thin_geojson = folder / f"thin_contour_{zoom}.geojson"
-        thin_geojson_buf = folder / f"thin_contour_buf_{zoom}.geojson"
         thin_tif = folder / f"thin_contour_{zoom}.tif"
+
+        r_tif = folder / f'r_{zoom}.tif'
+        g_tif = folder / f'g_{zoom}.tif'
+        b_tif = folder / f'b_{zoom}.tif'
+
+        r_final_tif = folder / f'r_final_{zoom}.tif'
+        g_final_tif = folder / f'g_final_{zoom}.tif'
+        b_final_tif = folder / f'b_final_{zoom}.tif'
 
         if land_delta_h >= 500:
             line_step = 200
@@ -383,99 +389,95 @@ class LayerGenerator:
                 str(contour_geojson),
             ]
         )
-
         GDALRunner().run(
             [
                 "ogr2ogr",
                 str(thick_geojson),
                 str(contour_geojson),
                 "-where",
-                f"elev % {line_step} = 0",
+                f"elev % {line_step} <= 0.01",
             ]
         )
-
         GDALRunner().run(
             [
                 "ogr2ogr",
                 str(thin_geojson),
                 str(contour_geojson),
                 "-where",
-                f"elev % {line_step} != 0",
+                f"elev % {line_step} > 0.01",
             ]
         )
+
         pixel_degree_size, bounds, center = get_geotiff_resolution(dem_tif)
-        thick_size = pixel_degree_size[0]
-        thin_size = pixel_degree_size[0] / 1.2
-
-        GDALRunner().run(
-            [
-                "ogr2ogr",
-                str(thick_geojson_buf),
-                str(thick_geojson),
-                "-dialect",
-                "sqlite",
-                "-sql",
-                f"SELECT elev, ST_Buffer(geometry, {thick_size}) AS geometry FROM contour",
-            ]
-        )
-
-        GDALRunner().run(
-            [
-                "ogr2ogr",
-                str(thin_geojson_buf),
-                str(thin_geojson),
-                "-dialect",
-                "sqlite",
-                "-sql",
-                f"SELECT elev, ST_Buffer(geometry, {thin_size}) AS geometry FROM contour",
-            ]
-        )
-
         GDALRunner().run(
             [
                 "gdal_rasterize",
                 "-burn",
-                "255",
-                "-l",
-                "contour",
-                "-tr",
-                str(pixel_degree_size[0]),
-                str(pixel_degree_size[1]),
+                str(1),
+                "-init",
+                str(255),
+                "-at",
                 "-te",
                 str(bounds[0]),
                 str(bounds[1]),
                 str(bounds[2]),
                 str(bounds[3]),
+                "-tr",
+                str(pixel_degree_size[0]),
+                str(pixel_degree_size[1]),
                 "-ot",
                 "Byte",
-                "-of",
-                "GTiff",
-                str(thick_geojson_buf),
+                str(thick_geojson),
                 str(thick_tif),
             ]
         )
-
         GDALRunner().run(
             [
                 "gdal_rasterize",
                 "-burn",
-                "200",
-                "-l",
-                "contour",
-                "-tr",
-                str(pixel_degree_size[0]),
-                str(pixel_degree_size[1]),
+                str(1),
+                "-init",
+                str(255),
                 "-te",
                 str(bounds[0]),
                 str(bounds[1]),
                 str(bounds[2]),
                 str(bounds[3]),
+                "-tr",
+                str(pixel_degree_size[0]),
+                str(pixel_degree_size[1]),
                 "-ot",
                 "Byte",
-                "-of",
-                "GTiff",
-                str(thin_geojson_buf),
+                str(thin_geojson),
                 str(thin_tif),
+            ]
+        )
+
+        GDALRunner().run(
+            [
+                "gdal_translate",
+                "-b",
+                str(1),
+                str(target_tif),
+                str(r_tif),
+            ]
+        )
+        GDALRunner().run(
+            [
+                "gdal_translate",
+                "-b",
+                str(2),
+                str(target_tif),
+                str(g_tif),
+            ]
+        )
+        GDALRunner().run(
+            [
+                "gdal_translate",
+                "-b",
+                str(3),
+                str(target_tif),
+                str(b_tif),
             ]
         )
 
@@ -483,19 +485,60 @@ class LayerGenerator:
             [
                 "gdal_calc.py",
                 "-A",
-                str(target_tif),
+                str(r_tif),
                 "-B",
-                str(thin_tif),
-                "-C",
                 str(thick_tif),
-                "--calc=where(C==255,35,where(B==200,60,A))",
-                "--allBands=A",
+                "-C",
+                str(thin_tif),
+                "--calc=where(C==1, A*0.45, where(B==1, A*0.15, A))",
                 "--type=Byte",
                 "--outfile",
-                str(target_tif_result),
+                str(r_final_tif),
             ]
         )
-        return target_tif_result
+        GDALRunner().gdal_calc(
+            [
+                "gdal_calc.py",
+                "-A",
+                str(g_tif),
+                "-B",
+                str(thick_tif),
+                "-C",
+                str(thin_tif),
+                "--calc=where(C==1, A*0.45, where(B==1, A*0.15, A))",
+                "--type=Byte",
+                "--outfile",
+                str(g_final_tif),
+            ]
+        )
+        GDALRunner().gdal_calc(
+            [
+                "gdal_calc.py",
+                "-A",
+                str(b_tif),
+                "-B",
+                str(thick_tif),
+                "-C",
+                str(thin_tif),
+                "--calc=where(C==1, A*0.45, where(B==1, A*0.15, A))",
+                "--type=Byte",
+                "--outfile",
+                str(b_final_tif),
+            ]
+        )
+
+        GDALRunner().gdal_merge(
+            [
+                "gdal_merge.py",
+                "-separate",
+                str(r_final_tif),
+                str(g_final_tif),
+                str(b_final_tif),
+                "-o",
+                str(target_tif_final),
+            ]
+        )
+        return target_tif_final
 
     @classmethod
     def get_geotiff_native_zoom(cls, path: str, pixel_size_degree: tuple, center_coords: tuple = (50, 23)) -> int:

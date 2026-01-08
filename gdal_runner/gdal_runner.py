@@ -14,10 +14,13 @@ try:
 
     from osgeo_utils.gdal2tiles import *  # noqa
     from osgeo_utils.gdal2tiles import main as gdal2tiles_main
-except ImportError as exc:
-    Logger.exception(exc, exc_info=True)
+
+    from osgeo_utils.gdal_merge import *  # noqa
+    from osgeo_utils.gdal_merge import main as gdal_merge_main
+except ImportError:
     gdal_calc_main = None
     gdal2tiles_main = None
+    gdal_merge_main = None
 
 from utils import SingletonMeta
 
@@ -31,8 +34,9 @@ class GDALRunner(metaclass=SingletonMeta):
         ('gdal_contour', ['gdal_contour', '--help']),
         ('gdal_rasterize', ['gdal_rasterize', '--version']),
         ('ogr2ogr', ['ogr2ogr', '--version']),
-        ('gdal_calc', []),
-        ('gdal2tiles', []),
+        ('gdal_calc', gdal_calc_main),
+        ('gdal2tiles', gdal2tiles_main),
+        ('gdal_merge', gdal_merge_main),
     ]
 
     def __init__(self):
@@ -99,17 +103,13 @@ class GDALRunner(metaclass=SingletonMeta):
             Clock.schedule_once(self._call_is_installed_callbacks)
 
     def _check_gdal_installed(self) -> bool:
-        for tool_name, check_cli in self.TOOLS:
+        for tool_name, cmd in self.TOOLS:
             try:
-                if tool_name == 'gdal_calc':
-                    if not gdal_calc_main:
-                        raise ImportError
-                elif tool_name == 'gdal2tiles':
-                    if not gdal2tiles_main:
-                        raise ImportError
+                if isinstance(cmd, list):
+                    self.run(cmd)
                 else:
-                    cmd = self._generate_command(check_cli)
-                    subprocess.check_output(cmd, **self._subprocess_kwargs)
+                    if not bool(cmd):
+                        raise Exception(f'{tool_name} is missing')
             except Exception as exc:
                 Clock.schedule_once(
                     lambda *_, e=exc: Logger.exception(
@@ -138,13 +138,28 @@ class GDALRunner(metaclass=SingletonMeta):
 
     def run(self, cmd):
         cmd = self._generate_command(cmd)
-        subprocess.run(cmd, **self._subprocess_kwargs, check=True)
+        with subprocess.Popen(cmd, **self._subprocess_kwargs, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1) as proc:
+            for line in proc.stdout:
+                Logger.info(f'{line.rstrip()}')
+            for line in proc.stderr:
+                Logger.error(f'{line.rstrip()}')
+        if proc.returncode != 0:
+            raise subprocess.CalledProcessError(proc.returncode, cmd)
 
     def gdal_calc(self, gdal_args: list[str]):
+        if not gdal_calc_main:
+            raise Exception('gdal_calc implementation is missing')
         gdal_calc_main(gdal_args)
 
     def gdal2tiles(self, gdal_args: list[str]):
+        if not gdal2tiles_main:
+            raise Exception('gdal2tiles implementation is missing')
         gdal2tiles_main(gdal_args, called_from_main=True)
+
+    def gdal_merge(self, gdal_args: list[str]):
+        if not gdal_merge_main:
+            raise Exception('gdal_merge implementation is missing')
+        gdal_merge_main(gdal_args)
 
 
 __all__ = ['GDALRunner']

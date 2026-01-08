@@ -20,4 +20,4 @@ echo Removing build artifacts...
 rmdir /s /q build
 rmdir /s /q dist
 
-echo "Usage: MapDbCache.exe"
+echo Usage: MapDbCache.exe
