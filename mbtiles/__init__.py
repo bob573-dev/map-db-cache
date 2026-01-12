@@ -4,6 +4,9 @@ package was copy-pasted from the 'landez' lib with changes
 
 import os
 import tempfile
+from pathlib import Path
+
+import appdirs
 
 """ Default tiles URL """
 DEFAULT_TILES_URL = "http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -24,7 +27,7 @@ DEFAULT_DOWNLOAD_RETRIES = 10
 DEFAULT_TIMEOUT = 0.25
 """ Timeout between tiles downloading attempt if no connection """
 DEFAULT_CONNECTION_MAX_TIMEOUT = 15
-DEFAULT_CACHE_DIR = 'cached_tiles'
+DEFAULT_CACHE_DIR = Path(appdirs.user_cache_dir('map-db-cache', 'bob')) / 'mbtiles_cache'
 MAX_DOWNLOAD_TIME = 2678400  # 31 days in s
 
 

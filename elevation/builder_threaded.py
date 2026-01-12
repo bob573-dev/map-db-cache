@@ -19,12 +19,13 @@ from mbtiles import DEFAULT_CONNECTION_MAX_TIMEOUT, MAX_DOWNLOAD_TIME
 from mbtiles import DEFAULT_DOWNLOAD_RETRIES, DEFAULT_TIMEOUT
 from mbtiles.exceptions import DownloadError
 from mbtiles.exceptions import StopException
-from . import DEFAULT_OUTPUT, MARGIN, DEFAULT_MAX_DOWNLOAD_TILES, SPOOL, CACHE, CACHE_DIR
+from . import DEFAULT_OUTPUT, MARGIN, DEFAULT_MAX_DOWNLOAD_TILES, SPOOL, CACHE
 from .layer_generator import LayerGenerator
 from .mbutil import merge_tif_with_mbtiles
 from .sources import DEFAULT_PRODUCT, PRODUCTS_SPECS
 from .utils import build_bounds, ensure_setup, get_content_length
 from gdal_runner import GDALRunner
+from consts import ELEVATION_CACHE_DIR
 
 
 class ElevationBuilderThreaded:
@@ -88,7 +89,7 @@ class ElevationBuilderThreaded:
     def ensure_tiles(
         self,
         bounds,
-        cache_dir=CACHE_DIR,
+        cache_dir=ELEVATION_CACHE_DIR,
         margin=MARGIN,
         product=DEFAULT_PRODUCT,
         max_download_tiles=DEFAULT_MAX_DOWNLOAD_TILES,
@@ -172,7 +173,7 @@ class ElevationBuilderThreaded:
     def _seed(
         self,
         bounds,
-        cache_dir=CACHE_DIR,
+        cache_dir=ELEVATION_CACHE_DIR,
         product=DEFAULT_PRODUCT,
         max_download_tiles=DEFAULT_MAX_DOWNLOAD_TILES,
         **kwargs,

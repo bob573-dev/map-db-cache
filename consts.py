@@ -1,6 +1,9 @@
 from math import floor
 from pathlib import Path
 
+import appdirs
+
+
 MAX_LONGITUDE = 180
 MIN_LONGITUDE = -MAX_LONGITUDE
 MAX_LATITUDE = 85.0511287798
@@ -37,3 +40,14 @@ ZOOM_IN_PNG = str(PNG_PATH / 'zoom_in.png')
 ZOOM_OUT_PNG = str(PNG_PATH / 'zoom_out.png')
 
 LOCALES_DOMAIN = 'base'
+
+BASE_CACHE_DIR = Path(appdirs.user_cache_dir('map-db-cache', 'bob'))
+ELEVATION_CACHE_DIR = BASE_CACHE_DIR / 'elevation'
+MAPVIEW_CACHE_DIR = BASE_CACHE_DIR / 'mapview'
+
+if not ELEVATION_CACHE_DIR.exists():
+    ELEVATION_CACHE_DIR.mkdir(parents=True)
+
+if not MAPVIEW_CACHE_DIR.exists():
+    MAPVIEW_CACHE_DIR.mkdir(parents=True)
+

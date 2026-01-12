@@ -11,7 +11,8 @@ from kivy_garden.mapview.source import MapSource
 from kivy_garden.mapview.utils import clamp
 
 from consts import (DEFAULT_LAT, DEFAULT_LON, ZOOM_IN_PNG, ZOOM_OUT_PNG, MIN_LONGITUDE, MAX_LONGITUDE, MAX_LATITUDE,
-    MIN_LATITUDE, MIN_CENTER_LATITUDE, MAX_CENTER_LONGITUDE, MAX_CENTER_LATITUDE, MIN_CENTER_LONGITUDE)
+                    MIN_LATITUDE, MIN_CENTER_LATITUDE, MAX_CENTER_LONGITUDE, MAX_CENTER_LATITUDE, MIN_CENTER_LONGITUDE,
+                    MAPVIEW_CACHE_DIR)
 from mbtiles import DEFAULT_TILES_SUBDOMAINS
 from mbtiles.utils import latlon_to_tile_xy
 from tools.binding_manager import BindingManager
@@ -339,12 +340,15 @@ class MapPanel(FloatLayout):
             max_zoom=self.max_zoom,
             attribution=self.attribution,
             subdomains=self.subdomains,
+            cache_dir=str(MAPVIEW_CACHE_DIR),
         )
         self.set_zoom(self.zoom)
         self.map_view = map_view = MapViewBounded(
             map_source=self.map_source,
-            lat=lat, lon=lon,
+            lat=lat,
+            lon=lon,
             zoom=self.zoom,
+            cache_dir=str(MAPVIEW_CACHE_DIR),
         )
         self.add_widget(map_view)
         self._bindings.bind_item(map_view, 'zoom', self.setter('zoom'))

@@ -2,8 +2,10 @@ import logging
 import os, sys
 from pathlib import Path
 
+import appdirs
+
 DEFAULT_LOG_LEVEL = logging.DEBUG
-DEFAULT_LOG_DIR = 'logs'
+DEFAULT_LOG_DIR = appdirs.user_log_dir('map-db-cache', 'bob')
 DEFAULT_MAXIMIZE = False
 
 
