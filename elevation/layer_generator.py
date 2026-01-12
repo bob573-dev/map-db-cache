@@ -6,6 +6,8 @@ import sqlite3
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Callable
+
 from kivy.logger import Logger
 
 import numpy as np
@@ -13,6 +15,7 @@ from PIL import Image
 from pyproj import CRS
 from pyproj import Geod
 
+from elevation import MAX_MBTILES_BOUNDS
 from elevation.utils import get_geotiff_resolution, get_mbtiles_metadata, update_metadata_field
 from gdal_runner import GDALRunner
 from mbtiles.mbutil import disk_to_mbtiles, prepare_metadata
@@ -20,14 +23,17 @@ from mbtiles.mbutil import disk_to_mbtiles, prepare_metadata
 
 @dataclass
 class LayerGenerator:
+    PERMITTED_MAX_ZOOM = 14
+
     @classmethod
     def generate_layer(
         cls,
         dem_tif: str,
         out_mbtiles: str,
         max_zoom=14,
+        layer_zooms_generated_cb: Callable[[int], None] = None,
     ):
-        max_zoom = min(max_zoom, 14)
+        max_zoom = min(max_zoom, cls.PERMITTED_MAX_ZOOM)
         with tempfile.TemporaryDirectory() as tmp:
             tmp = Path(tmp)
             temp_mbtiles = tmp / "temp.mbtiles"
@@ -46,12 +52,16 @@ class LayerGenerator:
 
             for zoom in range(max_zoom + 1):
                 tiles_path = cls.generate_tiles_for_zoom(temp_tif, color_file, zoom, land_h)
+                if layer_zooms_generated_cb:
+                     layer_zooms_generated_cb(zoom +1)
 
-            prepare_metadata(tiles_path, 0, max_zoom, (-180, -90, 180, 90))
+            prepare_metadata(tiles_path, 0, max_zoom, MAX_MBTILES_BOUNDS)
             disk_to_mbtiles(
                 tiles_path,
                 temp_mbtiles,
             )
+            if layer_zooms_generated_cb:
+                 layer_zooms_generated_cb(max_zoom + 1)
 
             shutil.move(temp_mbtiles, out_mbtiles)
             return out_mbtiles

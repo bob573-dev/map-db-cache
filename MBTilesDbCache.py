@@ -142,6 +142,14 @@ class MBTilesDbCache(EventDispatcher):
             progress_cb=lambda downloaded, total: setattr(self, '_progress_elevation', [downloaded, total]),
             error_cb=Clock.create_trigger(lambda *_: self.dispatch('on_error')),
             connection_lost_cb=Clock.create_trigger(lambda *_: self.dispatch('on_connection_lost')),
+            max_zoom=self.zoom_to,
+            generate_layer=self.map_content == MapContent.MAP_WITH_ELEVATION,
+        )
+        self.bind(
+            map_content=lambda i, v: setattr(
+                builder, 'generate_layer', v == MapContent.MAP_WITH_ELEVATION
+            ),
+            zoom_to=lambda i, v: setattr(builder, 'max_zoom', v),
         )
         return builder
 
@@ -237,7 +245,10 @@ class MBTilesDbCache(EventDispatcher):
                 else 0
             )
         elevation_time_to_download = (
-            self.elevation_builder.calculate_average_time(self.bbox, margin=self.elevation_margin)
+            self.elevation_builder.calculate_average_time(
+                self.bbox,
+                margin=self.elevation_margin,
+            )
             if self.map_content != MapContent.ONLY_MAP
             else 0
         )
@@ -283,7 +294,6 @@ class MBTilesDbCache(EventDispatcher):
             self.elevation_builder.merge_threaded(
                 self.bbox,
                 self.filepath,
-                max_zoom=self.zoom_to,
                 margin=self.elevation_margin,
                 success_cb=trigger_dispatch_on_success,
                 final_cb=trigger_set_finish_elevation,

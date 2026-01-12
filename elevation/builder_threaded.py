@@ -34,6 +34,8 @@ class ElevationBuilderThreaded:
         error_cb: Callable[[], None] = None,
         connection_lost_cb: Callable[[], None] = None,
         wait_connection=True,
+        generate_layer=False,
+        max_zoom=14,
         **kwargs,
     ):
         self._progress_cb = progress_cb
@@ -47,7 +49,7 @@ class ElevationBuilderThreaded:
         self._chunk_size_bytes = 1024 * 64  # 64 KB
         self._default_one_tile_bytes = 4_300_000
         self._processing_coefficient = (
-            15  # indicates how much tile processing is heavier for progress than chunk downloading
+            10  # indicates how much tile processing is heavier for progress than chunk downloading
         )
 
         self._gdal_runner = GDALRunner()
@@ -59,6 +61,10 @@ class ElevationBuilderThreaded:
         self._tiles_processed = 0
         self._total_tiles = 0
 
+        self.generate_layer = generate_layer
+        self.max_zoom = max_zoom
+        self._layer_zooms_generated = 0
+        self._layer_generation_progress_coefficient = 4  # TODO: it's mock for download_time calculation
         self._default_time_to_download_one_chunk = 0.3  # TODO: it's mock for download_time calculation
         self._default_process_time = 15  # TODO: it's mock for download_time calculation
         self._chunk_download_time_list = [self._default_time_to_download_one_chunk]
@@ -278,8 +284,6 @@ class ElevationBuilderThreaded:
         self,
         bounds,
         mbtiles_file,
-        max_zoom=14,
-        generate_layer=True,
         product=DEFAULT_PRODUCT,
         margin=MARGIN,
         **kwargs,
@@ -290,15 +294,24 @@ class ElevationBuilderThreaded:
         bounds = build_bounds(bounds, margin=margin)
         merge_tif_with_mbtiles(bounds, tifffile, mbtiles_file, tiff_source=product)
 
-        if generate_layer:
+        if self.generate_layer:
             layer_mbtiles = tempfile.NamedTemporaryFile(suffix=".mbtiles", delete=False).name
-            self._layer_generator.generate_layer(tifffile, layer_mbtiles, max_zoom=max_zoom)
+            self._layer_generator.generate_layer(
+                tifffile,
+                layer_mbtiles,
+                max_zoom=self.max_zoom,
+                layer_zooms_generated_cb=self._layer_zooms_generated_cb,
+            )
 
             self._layer_generator.add_layer(
                 target_mbtiles=mbtiles_file, layer_mbtiles=layer_mbtiles, name='Terrain', layer_source=product
             )
 
         os.remove(tifffile)
+
+    def _layer_zooms_generated_cb(self, zooms_generated):
+        self._layer_zooms_generated = zooms_generated
+        self._call_progress_cb()
 
     def get_tile_names(
         self,
@@ -341,7 +354,13 @@ class ElevationBuilderThreaded:
                     self._reset_events()
                 self._count_tiles(bounds, product=product, margin=margin)
                 if setter_cb:
-                    Clock.schedule_once(lambda *_: setter_cb(1 * random.uniform(0.51, 1)))
+                    if self.generate_layer:
+                        bottom, left, top, right = bounds
+                        one_lat_degree_in_km = 111.32
+                        side_km = (top - bottom) * one_lat_degree_in_km
+                        Clock.schedule_once(lambda *_: setter_cb(side_km * 1.9 * random.uniform(0.95, 1.05)))
+                    else:
+                        Clock.schedule_once(lambda *_: setter_cb(1 * random.uniform(0.51, 1)))
                 return
             except DownloadError:
                 if setter_cb:
@@ -379,6 +398,12 @@ class ElevationBuilderThreaded:
             tiles_to_process += 1
 
         processing_time = self._default_process_time * random.uniform(0.8, 1.2) * tiles_to_process
+        if self.generate_layer:
+            total = min(self.max_zoom, self._layer_generator.PERMITTED_MAX_ZOOM) + 1
+            processing_time += (
+                total - self._layer_zooms_generated
+            ) * self._layer_generation_progress_coefficient
+
         return max(download_time, 0) + max(processing_time, 0)
 
     def ensure_tile(self, *args, **kwargs):
@@ -483,6 +508,7 @@ class ElevationBuilderThreaded:
             self._fetched_tiles_chunks = 0
             self._all_tiles_processed = False
             self._tiles_processed = 0
+            self._layer_zooms_generated = 0
 
             self._chunk_download_time_list.clear()
             self._call_progress_cb()
@@ -548,6 +574,7 @@ class ElevationBuilderThreaded:
         self._all_tiles_processed = False
         self._tiles_processed = 0
         self._total_tiles = 0
+        self._layer_zooms_generated = 0
 
     def merge_threaded(
         self,
@@ -587,6 +614,11 @@ class ElevationBuilderThreaded:
             int(self._all_tiles_processed) + self._tiles_processed
         )
         total = self._total_tiles_chunks + self._processing_coefficient * (1 + self._total_tiles)
+
+        if self.generate_layer:
+            current += self._layer_zooms_generated * self._layer_generation_progress_coefficient
+            total += (min(self.max_zoom, self._layer_generator.PERMITTED_MAX_ZOOM) + 1) * self._layer_generation_progress_coefficient
+
         Logger.debug(f'ElevationBuilderThreaded: progress {current}/{total}')
         if self._progress_cb:
             self._progress_cb(current, total)

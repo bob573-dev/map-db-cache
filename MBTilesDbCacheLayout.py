@@ -69,7 +69,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
     side = NumericProperty(defaultvalue=13, allownone=True)
     min_side = NumericProperty(1)
     max_side = NumericProperty(25)
-    max_side_elevation = NumericProperty(29)
+    max_side_elevation = NumericProperty(99)
     zoom = NumericProperty(defaultvalue=5)
     zoom_to = NumericProperty(16, allownone=True)
     min_zoom = NumericProperty(defaultvalue=DEFAULT_MIN_ZOOM)
@@ -169,6 +169,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
             self.max_side = max_side
 
     def _update_elevation_margin(self, *_):
+        # NOTE: max elevation size == 29
         if not self.side:
             return
         if self.map_content == MapContent.ONLY_ELEVATION:
