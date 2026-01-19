@@ -40,7 +40,7 @@ sh install_with_sourcecode.sh
 
 ### Run
 ```
-python main.py [--silent] [--verbose] [--maximize]
+python main.py [--silent] [--verbose] [--minimize]
 ```
 
 ### Preview downloaded map
@@ -67,7 +67,7 @@ set PYTHONHOME=%CD%\gdal_runner\gdal_win\Python312
 ```
 run
 ```
-%PYTHON_EXE% main.py [--silent] [--verbose] [--maximize]
+%PYTHON_EXE% main.py [--silent] [--verbose] [--minimize]
 ```
 
 ### Preview downloaded map

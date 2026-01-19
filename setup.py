@@ -6,7 +6,7 @@ import appdirs
 
 DEFAULT_LOG_LEVEL = logging.DEBUG
 DEFAULT_LOG_DIR = appdirs.user_log_dir('map-db-cache', 'bob')
-DEFAULT_MAXIMIZE = False
+DEFAULT_MAXIMIZE = True
 
 
 def setup():  # should be executed before any kivy import
@@ -19,9 +19,9 @@ def setup():  # should be executed before any kivy import
     if '--verbose' in sys.argv:
         sys.argv.remove('--verbose')
         log_level = logging.INFO
-    if '--maximize' in sys.argv:
-        sys.argv.remove('--maximize')
-        maximize = True
+    if '--minimize' in sys.argv:
+        sys.argv.remove('--minimize')
+        maximize = False
 
     _setup_logging(log_level)
     _setup_mouse()
