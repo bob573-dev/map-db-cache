@@ -24,13 +24,18 @@ then check gdal installation
 python3 -c 'from osgeo import gdal_array'
 ```
 
-if you have problems - read more about installing gdal python package here \
+If this command raises an ImportError, numpy-based raster support has not been properly installed:
+```
+pip install --no-cache --force-reinstall gdal[numpy]=="$(gdal-config --version).*"
+```
+
+if you have another problems - read more about installing gdal python package here \
 https://pypi.org/project/GDAL/
 
 ### Installation with script
 may have problems
 ```
-sh install_with_source.sh
+sh install_with_sourcecode.sh
 ```
 
 ### Run
