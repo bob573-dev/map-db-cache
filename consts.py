@@ -3,6 +3,7 @@ from pathlib import Path
 
 import appdirs
 
+USE_CUSTOM_PROVIDER = False
 
 MAX_LONGITUDE = 180
 MIN_LONGITUDE = -MAX_LONGITUDE

@@ -32,6 +32,7 @@ from consts import (
     HEADER_TEXT_COLOR,
     DEFAULT_MAP_BASENAME,
     FONT_SIZE_SMALL,
+    USE_CUSTOM_PROVIDER,
 )
 from enums import MapContent
 from gdal_runner import GDALRunner
@@ -477,9 +478,12 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
         )
         header_label_background.add_widget(header_label)
 
+        options = [*PROVIDERS.keys()]
+        if USE_CUSTOM_PROVIDER:
+            options.append(self.custom_provider_key)
         provider_dropdown_layout = self._create_dropdown_layout(
             field='provider',
-            options=(self.custom_provider_key, *PROVIDERS.keys()),
+            options=options,
         )
         container_layout.add_widget(provider_dropdown_layout)
 
