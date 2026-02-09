@@ -66,7 +66,7 @@ class MBTilesDbCacheApp(LocalizedApp):
                 text=_("The map is still downloading. \nExiting now will cancel the operation. Continue?"),
                 halign='center',
                 valign='middle',
-                text_size=(400, None),
+                text_size=(600, None),
             )
         )
 
@@ -82,7 +82,7 @@ class MBTilesDbCacheApp(LocalizedApp):
             title=_("Exit confirmation"),
             content=content,
             size_hint=(None, None),
-            size=(600, 200),
+            size=(680, 320),
             auto_dismiss=False,
         )
 
