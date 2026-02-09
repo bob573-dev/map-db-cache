@@ -82,7 +82,7 @@ class MBTilesDbCacheApp(LocalizedApp):
             title=_("Exit confirmation"),
             content=content,
             size_hint=(None, None),
-            size=(400, 200),
+            size=(600, 200),
             auto_dismiss=False,
         )
 
