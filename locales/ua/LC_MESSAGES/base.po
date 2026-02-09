@@ -152,3 +152,12 @@ msgstr "Карти висот недоступні."
 
 msgid "Please report this issue to bob573@atomicmail.io"
 msgstr "Будь ласка, повідомте про цю проблему на bob573@atomicmail.io"
+
+msgid "Exit"
+msgstr "Вийти"
+
+msgid "Exit confirmation"
+msgstr "Підтвердження виходу"
+
+msgid "The map is still downloading. \nExiting now will cancel the operation. Continue?"
+msgstr "Мапа ще завантажується. \nВихід перерве поточну операцію. Продовжити?"

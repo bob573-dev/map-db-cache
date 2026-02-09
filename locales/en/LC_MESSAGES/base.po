@@ -152,3 +152,12 @@ msgstr ""
 
 msgid "Please report this issue to bob573@atomicmail.io"
 msgstr ""
+
+msgid "Exit"
+msgstr ""
+
+msgid "Exit confirmation"
+msgstr ""
+
+msgid "The map is still downloading. \nExiting now will cancel the operation. Continue?"
+msgstr ""
