@@ -10,6 +10,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
+from wakepy import keep
 
 from localization import LocalizedApp, _
 from MBTilesDbCacheLayout import MBTilesDbCacheLayout
@@ -34,6 +35,10 @@ class MBTilesDbCacheApp(LocalizedApp):
 
         self.main_layout = MBTilesDbCacheLayout(directory=os.getenv('MAP_DIR', DEFAULT_MAPS_DIRECTORY))
         return self.main_layout
+
+    @keep.running
+    def run(self):
+        super().run()
 
     def _update_touch_filter(self):
         Window.unbind(
