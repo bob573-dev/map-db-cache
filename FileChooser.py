@@ -42,7 +42,7 @@ class FileChooserPopup(Popup):
         path_container = BoxLayout(
             padding=(10, 5, 0, 0),
             size_hint_y=None,
-            height=40,
+            height=self.entry_height,
         )
         self.path_label = Label(
             text=path,
@@ -65,11 +65,16 @@ class FileChooserPopup(Popup):
             selection=self._on_selection_change,
         )
         self.selected_dir = self.filechooser.path
-        self.submit_btn = Button(text=_('Select'), on_release=self._submit, size_hint_y=0.1)
+
+        buttons_container = BoxLayout(size_hint_y=0.1)
+        self.cancel_btn = Button(text=_('Cancel'), on_release=self.dismiss, size_hint_x=0.5)
+        self.submit_btn = Button(text=_('OK'), on_release=self._submit, size_hint_x=0.5)
+        buttons_container.add_widget(self.cancel_btn)
+        buttons_container.add_widget(self.submit_btn)
 
         content.add_widget(path_container)
         content.add_widget(self.filechooser)
-        content.add_widget(self.submit_btn)
+        content.add_widget(buttons_container)
         self.content = content
 
     def _on_path_change(self, _, path):

@@ -705,7 +705,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
         self.bind(directory=lambda i, v: setattr(dir_textinput, 'text', str(Path(v).absolute())))
         self.bind(downloading=lambda i, v: setattr(dirselect_layout.button, 'disabled', v))
 
-        file_chooser = FileChooserPopup(path=self.directory, size_hint=(0.5, 0.75))
+        file_chooser = FileChooserPopup(path=self.directory, size_hint=(0.6, 0.75))
         file_chooser.bind(selected_dir=self.setter('directory'))
 
         dirselect_layout.button.bind(on_release=lambda *_: file_chooser.open())
