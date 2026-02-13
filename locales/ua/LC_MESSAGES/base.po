@@ -161,3 +161,30 @@ msgstr "Підтвердження виходу"
 
 msgid "The map is still downloading. \nExiting now will cancel the operation. Continue?"
 msgstr "Мапа ще завантажується. \nВихід перерве поточну операцію. Продовжити?"
+
+msgid "OK"
+msgstr "ОК"
+
+msgid "Create folder"
+msgstr "Створити папку"
+
+msgid "Input folder name"
+msgstr "Введіть назву папки"
+
+msgid "Failed to create folder"
+msgstr "Не вдалося створити папку"
+
+msgid "invalid name"
+msgstr "недопустима назва"
+
+msgid "already exists"
+msgstr "вже існує"
+
+msgid "Info"
+msgstr "Інфо"
+
+msgid "Error"
+msgstr "Помилка"
+
+msgid "Create"
+msgstr "Створити"

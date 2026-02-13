@@ -12,22 +12,27 @@ class InfoPopup(Popup):
     __events__ = ['on_ok']
 
     def __init__(self, **kwargs):
-        kwargs.setdefault('title', 'Info')
+        content_kwargs = {}
+        for k in ('buttons_size_hint_y',):
+            if k in kwargs:
+                content_kwargs[k] = kwargs.pop(k)
+        kwargs.setdefault('title', _('Info'))
         super().__init__(**kwargs)
-        self._build_content()
+        self._build_content(**content_kwargs)
 
-    def _build_content(self):
+    def _build_content(self, **kwargs):
+        buttons_size_hint_y = kwargs.get('buttons_size_hint_y', 0.2)
         container = BoxLayout(orientation='vertical', padding=10, spacing=10)
         label = Label(
             text=self.text,
             halign='center',
             valign='middle',
-            size_hint=(1, 0.8),
+            size_hint=(1, 1-buttons_size_hint_y),
         )
         label.bind(size=lambda instance, value: setattr(instance, 'text_size', value))
         self.bind(text=label.setter('text'))
 
-        ok_button = Button(text="OK", size_hint_y=0.2)
+        ok_button = Button(text="OK", size_hint_y=buttons_size_hint_y)
         ok_button.bind(on_release=self._make_ok)
 
         container.add_widget(label)
@@ -40,6 +45,13 @@ class InfoPopup(Popup):
 
     def on_ok(self, *_):
         pass
+
+
+class ErrorPopup(InfoPopup):
+    def __init__(self, **kwargs):
+        kwargs.setdefault('title', _('Error'))
+        kwargs.setdefault('buttons_size_hint_y', 0.5)
+        super().__init__(**kwargs)
 
 
 class FileExistsPopup(Popup):
@@ -104,4 +116,4 @@ class FileExistsPopup(Popup):
         pass
 
 
-__all__ = ['InfoPopup', 'FileExistsPopup']
+__all__ = ['InfoPopup', 'ErrorPopup', 'FileExistsPopup']

@@ -161,3 +161,30 @@ msgstr ""
 
 msgid "The map is still downloading. \nExiting now will cancel the operation. Continue?"
 msgstr ""
+
+msgid "OK"
+msgstr ""
+
+msgid "Create folder"
+msgstr ""
+
+msgid "Input folder name"
+msgstr ""
+
+msgid "Failed to create folder"
+msgstr ""
+
+msgid "invalid name"
+msgstr ""
+
+msgid "already exists"
+msgstr ""
+
+msgid "Info"
+msgstr ""
+
+msgid "Error"
+msgstr ""
+
+msgid "Create"
+msgstr ""
