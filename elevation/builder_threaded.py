@@ -525,10 +525,10 @@ class ElevationBuilderThreaded:
                     self._call_success_cb(success_cb)
                 except StopException:
                     self._clean_run()
-                    Logger.info('MBTilesBuilderThreaded: Downloading process was stopped')
+                    Logger.info('ElevationBuilderThreaded: Downloading process was stopped')
                 except Exception as exc:
                     Logger.exception(
-                        'MBTilesBuilderThreaded: Downloading process was interrupted by exception.', exc_info=exc
+                        'ElevationBuilderThreaded: Downloading process was interrupted by exception.', exc_info=exc
                     )
                     self._clean_run()
                     self._call_error_cb()
@@ -558,9 +558,9 @@ class ElevationBuilderThreaded:
                     self._call_progress_cb()
                     self._call_success_cb(success_cb)
                 except StopException:
-                    Logger.info('MBTilesBuilderThreaded: Clip process was stopped')
+                    Logger.info('ElevationBuilderThreaded: Clip process was stopped')
                 except Exception as exc:
-                    Logger.exception('MBTilesBuilderThreaded: Clip process was interrupted by exception.', exc_info=exc)
+                    Logger.exception('ElevationBuilderThreaded: Clip process was interrupted by exception.', exc_info=exc)
                     self._call_error_cb()
                 finally:
                     self._clean_run()
@@ -597,10 +597,10 @@ class ElevationBuilderThreaded:
                     self._call_progress_cb()
                     self._call_success_cb(success_cb)
                 except StopException:
-                    Logger.info('MBTilesBuilderThreaded: Merge process was stopped')
+                    Logger.info('ElevationBuilderThreaded: Merge process was stopped')
                 except Exception as exc:
                     Logger.exception(
-                        'MBTilesBuilderThreaded: Merge process was interrupted by exception.', exc_info=exc
+                        'ElevationBuilderThreaded: Merge process was interrupted by exception.', exc_info=exc
                     )
                     self._call_error_cb()
                 finally:
@@ -625,7 +625,7 @@ class ElevationBuilderThreaded:
             self._progress_cb(current, total)
 
     def _call_success_cb(self, success_cb):
-        Logger.debug(f'MBTilesBuilderThreaded: successfully finished process')
+        Logger.debug(f'ElevationBuilderThreaded: successfully finished process')
         if success_cb:
             success_cb()
 
