@@ -117,7 +117,7 @@ class TileDownloader(TileSource):
                     _("Status code : %s, url : %s") % (request.status_code, url),
                     status_code=request.status_code
                 )
-            except (requests.exceptions.ConnectionError, requests.exceptions.Timeout, DownloadError) as e:
+            except Exception as e:
                 Logger.debug(_("Download error, retry (%s left). (%s)") % (r, e))
                 r -= 1
                 time.sleep(sleeptime)

@@ -144,7 +144,7 @@ class ElevationBuilderThreaded:
                     f"ElevationBuilder: Status code: {response.status_code}, url: {url}",
                     status_code=response.status_code,
                 )
-            except (requests.exceptions.ConnectionError, requests.exceptions.Timeout, DownloadError) as e:
+            except Exception as e:
                 Logger.debug(f"ElevationBuilder: Download error, retry ({r} left). ({e})")
                 r -= 1
                 time.sleep(sleeptime)
