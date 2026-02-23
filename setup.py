@@ -47,6 +47,11 @@ def _setup_logging(level):
     for handler in root_logger.handlers:
         handler.setLevel(level)
 
+    fmt = "%(asctime)s.%(msecs)03d - %(message)s"
+    datefmt = "%H:%M:%S"
+    for handler in root_logger.handlers:
+        handler.setFormatter(logging.Formatter(fmt, datefmt))
+
 
 def _setup_mouse():
     from kivy.config import Config
