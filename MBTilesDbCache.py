@@ -234,6 +234,9 @@ class MBTilesDbCache(EventDispatcher):
                 )
 
     def _update_time_to_download(self, *_):
+        if self.zoom_to is None:
+            self.time_to_download = 0
+            return
         if self.elevation_builder.is_running and not self.builder.is_running:
             mbtiles_time_to_download = 0
         else:

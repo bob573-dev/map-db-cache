@@ -399,7 +399,7 @@ class ElevationBuilderThreaded:
             tiles_to_process += 1
 
         processing_time = self._default_process_time * random.uniform(0.8, 1.2) * tiles_to_process
-        if self.generate_layer:
+        if self.generate_layer and self.max_zoom is not None:
             total = min(self.max_zoom, self._layer_generator.PERMITTED_MAX_ZOOM) + 1
             processing_time += (
                 total - self._layer_zooms_generated
