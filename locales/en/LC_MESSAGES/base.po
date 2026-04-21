@@ -188,3 +188,15 @@ msgstr ""
 
 msgid "Create"
 msgstr ""
+
+msgid "Select all"
+msgstr ""
+
+msgid "Cut"
+msgstr ""
+
+msgid "Copy"
+msgstr ""
+
+msgid "Paste"
+msgstr ""

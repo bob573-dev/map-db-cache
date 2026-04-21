@@ -188,3 +188,15 @@ msgstr "Помилка"
 
 msgid "Create"
 msgstr "Створити"
+
+msgid "Select all"
+msgstr "Виділити все"
+
+msgid "Cut"
+msgstr "Вирізати"
+
+msgid "Copy"
+msgstr "Копіювати"
+
+msgid "Paste"
+msgstr "Вставити"

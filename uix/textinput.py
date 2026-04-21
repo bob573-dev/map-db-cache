@@ -18,7 +18,7 @@ class BubbleButtonColored(ButtonColored):
         kwargs.setdefault('valign', 'center')
         kwargs.setdefault('padding', [12, 0, 0, 0])
         super().__init__(**kwargs)
-        self.background_color[3] = self.background_color[3] * 0.75
+        self.background_color[3] = self.background_color[3] * 0.8
 
     def on_size(self, *args):
         self.text_size = self.size
@@ -27,6 +27,7 @@ class BubbleButtonColored(ButtonColored):
 class CPBubble(Bubble):
     def __init__(self, textinput, touch_pos, selection_from, selection_to, **kwargs):
         kwargs.setdefault('size_hint', (None, None))
+        kwargs.setdefault('width', 140)
         kwargs.setdefault('show_arrow', True)
         kwargs.setdefault('arrow_pos', 'top_left')
         super().__init__(**kwargs)
