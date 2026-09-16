@@ -1,11 +1,13 @@
 from kivy.clock import Clock
 from kivy.graphics import Color, Line
 from kivy.properties import NumericProperty, BooleanProperty, ObjectProperty, ListProperty
+from kivy.uix.behaviors.focus import FocusBehavior
 from kivy.uix.bubble import Bubble
 from kivy.uix.textinput import TextInput
 
 from consts import DEFAULT_LAT, DEFAULT_LON, INPUT_INCREASE_PNG, INPUT_DECREASE_PNG, FONT_SIZE_SMALL, \
-    MIN_CENTER_LATITUDE, MAX_CENTER_LONGITUDE, MAX_CENTER_LATITUDE, MIN_CENTER_LONGITUDE, ERROR_COLOR
+    MIN_CENTER_LATITUDE, MAX_CENTER_LONGITUDE, MAX_CENTER_LATITUDE, MIN_CENTER_LONGITUDE, ERROR_COLOR, \
+    NUMERIC_KEYBOARD_LAYOUT
 from localization import _
 from tools.binding_manager import BindingManager
 from . import BoxLayoutAutoresized
@@ -35,7 +37,7 @@ class CPBubble(Bubble):
         self.touch_pos = touch_pos
         self.selection_from = selection_from
         self.selection_to = selection_to
-        self._button_size = (self.width, 32)
+        self._button_size = (self.width, 48)
         self._bindings = BindingManager()
         self._root_widget = None
         self._trigger_restore_selection = Clock.create_trigger(self._restore_selection, 0.15)
@@ -108,10 +110,20 @@ class CPBubble(Bubble):
         self._update_buttons()
 
     def _on_touch_down_root(self, root, touch):
-        if not self.collide_point(*touch.pos):
+        if self.collide_point(*touch.pos):
+            # a touch on the bubble's own buttons never registers itself into
+            # FocusBehavior.ignored_touch (Button isn't FocusBehavior-based) --
+            # without this, its touch-up trips the global defocus sweep
+            # (FocusBehavior._handle_post_on_touch_up) and closes whatever
+            # docked keyboard the real target's focus was keeping open
+            if touch not in FocusBehavior.ignored_touch:
+                FocusBehavior.ignored_touch.append(touch)
+        else:
             self.hide()
 
     def _update_pos(self, *args):
+        if self.parent is None:
+            return
         touch_x, touch_y = self.touch_pos
         arrow_relative_x, arrow_relative_y = 15, 8
         pos_x, pos_y = touch_x - arrow_relative_x, touch_y - self.content.height - arrow_relative_y
@@ -133,6 +145,7 @@ class CPBubble(Bubble):
 
 class TextInputUnderlined(TextInput):
     invalid = BooleanProperty(False)
+    keyboard_layout_name = 'qwerty'
 
     def  __init__(self, **kwargs):
         kwargs.setdefault('font_size', FONT_SIZE_SMALL)
@@ -150,10 +163,23 @@ class TextInputUnderlined(TextInput):
             pos=self._trigger_update_underline,
             size=self._trigger_update_underline,
             invalid=self._trigger_update_underline,
+            focus=self._update_vkeyboard_layout,
         )
         self._trigger_update_underline()
         self.__bubble = None
         self._saved_selection = None
+
+    def _update_vkeyboard_layout(self, _, value):
+        if not value:
+            return
+        keyboard = self._keyboard
+        if keyboard is not None and keyboard.widget is not None:
+            keyboard.widget.layout = self.keyboard_layout_name
+
+    def _bind_keyboard(self):
+        if self.readonly:
+            return
+        super()._bind_keyboard()
 
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
@@ -164,7 +190,17 @@ class TextInputUnderlined(TextInput):
                 )
                 self._show_copy_paste_bubble(self.to_window(*touch.pos))
                 return True
-        return super().on_touch_down(touch)
+        handled = super().on_touch_down(touch)
+        if handled:
+            self._reset_vkeyboard_preview_cursor()
+        return handled
+
+    def _reset_vkeyboard_preview_cursor(self):
+        keyboard = self._keyboard
+        if keyboard is not None and keyboard.widget is not None:
+            reset = getattr(keyboard.widget, 'reset_preview_cursor_to_end', None)
+            if reset is not None:
+                reset()
 
     def _show_copy_paste_bubble(self, touch_pos):
         if self.__bubble:
@@ -191,6 +227,7 @@ class TextInputRanged(TextInput):
     increase_button = ObjectProperty(None)
     decrease_button = ObjectProperty(None)
     buttons_size = ListProperty([13, 13])
+    keyboard_layout_name = NUMERIC_KEYBOARD_LAYOUT
 
     def __init__(self, step: int|float = 1, **kwargs):
         kwargs.setdefault('font_size', FONT_SIZE_SMALL)

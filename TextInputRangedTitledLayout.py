@@ -10,7 +10,7 @@ class TextInputRangedTitledLayout(BoxLayoutShort):
     min_value = NumericProperty(defaultvalue=0)
     max_value = NumericProperty(defaultvalue=0)
     value_setter = ObjectProperty(None)
-    buttons_overheight = NumericProperty(20)
+    buttons_overheight = NumericProperty(24)
     increase_button = ObjectProperty(None)
     decrease_button = ObjectProperty(None)
 

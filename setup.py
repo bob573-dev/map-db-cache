@@ -12,6 +12,7 @@ DEFAULT_MAXIMIZE = True
 def setup():  # should be executed before any kivy import
     log_level = DEFAULT_LOG_LEVEL
     maximize = DEFAULT_MAXIMIZE
+    tablet = False
 
     if '--silent' in sys.argv:
         sys.argv.remove('--silent')
@@ -22,12 +23,20 @@ def setup():  # should be executed before any kivy import
     if '--minimize' in sys.argv:
         sys.argv.remove('--minimize')
         maximize = False
+    if '--tablet' in sys.argv:
+        sys.argv.remove('--tablet')
+        tablet = True
 
+    _setup_keyboard(tablet)
     _setup_logging(log_level)
     _setup_mouse()
+    _setup_touch_input(tablet)
     _setup_window(maximize)
-    _setup_cursor()
+    _setup_cursor(tablet)
+    _setup_vkeyboard_class(tablet)
     _setup_gdal()
+
+    return tablet
 
 
 def _setup_logging(level):
@@ -58,24 +67,62 @@ def _setup_mouse():
     Config.set('input', 'mouse', 'mouse,disable_multitouch')
 
 
-def _setup_cursor():
+def _setup_touch_input(tablet):
+    if not tablet:
+        return
+
+    from utils import is_win_platform
+    if is_win_platform():
+        return
+
+    from kivy.config import Config
+    Config.remove_option('input', '%(name)s')
+    Config.set('input', 'touch', 'probesysfs,provider=mtdev,param=rotation=90,param=invert_y=1')
+
+
+def _setup_cursor(tablet):
     from kivy.core.window import Window
-    Window.show_cursor = True
+    Window.show_cursor = not tablet
 
 
 def _setup_window(maximize):
     from kivy.config import Config
-    Config.set('graphics', 'minimum_width', '860')
-    Config.set('graphics', 'minimum_height', '794')
+    Config.set('graphics', 'minimum_width', '1020')
+    Config.set('graphics', 'minimum_height', '820')
 
     if maximize:
         from kivy.core.window import Window
         Window.maximize()
     else:
         Config.set('graphics', 'width', '1024')
-        Config.set('graphics', 'height', '800')
+        Config.set('graphics', 'height', '820')
 
 
 def _setup_gdal():
     from gdal_runner import GDALRunner
     GDALRunner()
+
+
+def _setup_keyboard(tablet):
+    if not tablet:
+        return
+
+    from kivy.config import Config
+    from kivy.resources import resource_add_path
+    from consts import KEYBOARDS_PATH
+
+    Config.set('kivy', 'keyboard_mode', 'systemanddock')
+    resource_add_path(str(KEYBOARDS_PATH))
+
+
+def _setup_vkeyboard_class(tablet):
+    if not tablet:
+        return
+
+    # deferred until after _setup_mouse()/_setup_window() since importing
+    # kivy.core.window.Window instantiates the real window immediately,
+    # and doing that any earlier would apply with the wrong mouse/size config
+    from kivy.core.window import Window
+    from uix.vkeyboard import TabletVKeyboard
+
+    Window.set_vkeyboard_class(TabletVKeyboard)

@@ -19,3 +19,17 @@ class SingletonMeta(type):
 
 def is_win_platform():
     return platform.system() == 'Windows'
+
+
+def get_screen_size():
+    import tkinter
+
+    try:
+        root = tkinter.Tk()
+        try:
+            root.withdraw()
+            return root.winfo_screenwidth(), root.winfo_screenheight()
+        finally:
+            root.destroy()
+    except Exception:
+        return None

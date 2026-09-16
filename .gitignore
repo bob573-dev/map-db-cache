@@ -176,6 +176,11 @@ pyrightconfig.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python
 
+# Claude Code configuration
+CLAUDE.md
+.claude/
+docs/
+
 logs
 cache
 cached_tiles
@@ -184,3 +189,6 @@ map
 
 !gdal_runner/gdal_linux/lib
 !gdal_runner/gdal_linux/lib/*.so
+
+mbtilesdbcache.ini
+copy.sh

@@ -200,3 +200,9 @@ msgstr ""
 
 msgid "Paste"
 msgstr ""
+
+msgid "current"
+msgstr ""
+
+msgid "back"
+msgstr ""

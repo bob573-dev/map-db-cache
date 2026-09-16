@@ -3,28 +3,35 @@ from os.path import sep
 from typing import Optional
 from weakref import ref
 
+from kivy.config import Config
 from kivy.properties import StringProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.filechooser import FileChooserListView
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
-from kivy.uix.textinput import TextInput
 from kivy.core.text import Label as CoreLabel
 from kivy.logger import Logger
 
 from localization import _
 from tools.utils import check_filepath_valid
 from uix import ErrorPopup
+from uix.textinput import TextInputUnderlined
 
 
 class FileChooserListViewCurrentDir(FileChooserListView):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        if self._is_tablet_mode():
+            self.bind(layout=self._widen_tree_toggle_zone)
+            self._widen_tree_toggle_zone()
+
     def _generate_file_entries(self, *args, **kwargs):
         path = kwargs.get('path', self.path)
         if kwargs.get('parent', None) is None:
             pardir = self._create_entry_widget(
                 dict(
-                    name='.' + sep,
+                    name='--   ' + _('current'),
                     size='',
                     path=Path(path).absolute(),
                     controller=ref(self),
@@ -36,7 +43,29 @@ class FileChooserListViewCurrentDir(FileChooserListView):
             )
             yield 0, 1, pardir
 
-        yield from super()._generate_file_entries(*args, **kwargs)
+        for index, total, entry in super()._generate_file_entries(*args, **kwargs):
+            if entry.ids.filename.text == '..' + sep:
+                entry.ids.filename.text = '<-   ' + _('back')
+            yield index, total, entry
+
+    def entry_touched(self, entry, touch):
+        if 'button' in touch.profile and touch.button in (
+            'scrollup', 'scrolldown', 'scrollleft', 'scrollright'
+        ):
+            return super().entry_touched(entry, touch)
+        if self.dirselect and self.file_system.is_dir(entry.path) and self._is_tablet_mode():
+            self.open_entry(entry)
+            return
+        return super().entry_touched(entry, touch)
+
+    def _widen_tree_toggle_zone(self, *args):
+        treeview = self.layout.ids.get('treeview') if self.layout else None
+        if treeview is not None:
+            treeview.indent_start = '32px'
+
+    @staticmethod
+    def _is_tablet_mode():
+        return Config.get('kivy', 'keyboard_mode') == 'systemanddock'
 
 
 class FileChooserPopup(Popup):
@@ -111,7 +140,8 @@ class FileChooserPopup(Popup):
         self.new_folder_layout = BoxLayout(size_hint_x=None, spacing=5)
         self.new_folder_layout.bind(minimum_width=self.new_folder_layout.setter('width'))
 
-        self.new_folder_input = TextInput(size_hint_x=None, width=0, opacity=0, multiline=False)
+        self.new_folder_input = TextInputUnderlined(size_hint_x=None, width=0, opacity=0, multiline=False)
+        self.new_folder_input.background_color = (1, 1, 1, 1)
         self.new_folder_layout.add_widget(self.new_folder_input)
 
         self.create_folder_btn = Button(

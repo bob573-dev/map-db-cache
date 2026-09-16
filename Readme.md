@@ -15,7 +15,7 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 python patch_mapview.py
-pip install numpy>1.0.0 wheel setuptools>=67
+pip install "numpy>1.0.0" wheel "setuptools>=67"
 pip install gdal[numpy]=="$(gdal-config --version).*"
 ```
 
@@ -40,7 +40,7 @@ sh install_with_sourcecode.sh
 
 ### Run
 ```
-python main.py [--silent] [--verbose] [--minimize]
+python app.py [--silent] [--verbose] [--minimize] [--tablet]
 ```
 
 ### Preview downloaded map
@@ -67,7 +67,7 @@ set PYTHONHOME=%CD%\gdal_runner\gdal_win\Python312
 ```
 run
 ```
-%PYTHON_EXE% main.py [--silent] [--verbose] [--minimize]
+%PYTHON_EXE% app.py [--silent] [--verbose] [--minimize] [--tablet]
 ```
 
 ### Preview downloaded map

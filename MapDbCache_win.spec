@@ -17,6 +17,7 @@ binaries += [(str(f), '.') for f in glew.dep_bins]
 
 datas = [
     ('png', 'png'),
+    ('keyboards', 'keyboards'),
     ('locales', 'locales'),
     (str(python_site_packages / 'kivy_garden' / 'mapview' / 'icons'), 'kivy_garden/mapview/icons'),
     # Kivy fonts
@@ -42,7 +43,7 @@ hiddenimports = [
 ]
 
 a = Analysis(
-    ['main.py'],
+    ['app.py'],
     pathex=[],
     binaries=binaries,
     datas=datas,

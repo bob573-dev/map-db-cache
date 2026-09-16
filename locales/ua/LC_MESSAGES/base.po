@@ -200,3 +200,9 @@ msgstr "Копіювати"
 
 msgid "Paste"
 msgstr "Вставити"
+
+msgid "current"
+msgstr "поточна"
+
+msgid "back"
+msgstr "назад"

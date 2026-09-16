@@ -4,6 +4,7 @@ from pathlib import Path
 
 from kivy.logger import Logger
 from kivy.clock import Clock
+from kivy.core.window import Window
 from kivy.properties import NumericProperty, StringProperty, BooleanProperty, ListProperty, DictProperty, OptionProperty
 from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.boxlayout import BoxLayout
@@ -33,6 +34,7 @@ from consts import (
     DEFAULT_MAP_BASENAME,
     FONT_SIZE_SMALL,
     USE_CUSTOM_PROVIDER,
+    COMPACT_HEIGHT_THRESHOLD,
 )
 from enums import MapContent
 from gdal_runner import GDALRunner
@@ -89,6 +91,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self._compact_layout = Window.height < COMPACT_HEIGHT_THRESHOLD
         self.custom_provider_key = _('Your custom')
         self.progress_bar = None
         self.select_center_button = None
@@ -101,7 +104,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
 
         self._update_on_provider()
         self._update_filepath()
-        self._create_directory_if_not_exists()
+        self._verify_directory()
         self._init_downloader()
         self._init_popups()
 
@@ -180,8 +183,14 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
             margin = (side_elevation - self.side) / (2 * self.side) * 100
             self.elevation_margin = f'{margin}%'
 
-    def _create_directory_if_not_exists(self):
-        Path(self.directory).mkdir(parents=True, exist_ok=True)
+    def _verify_directory(self):
+        if not Path(self.directory).exists():
+            self.directory = DEFAULT_MAPS_DIRECTORY
+            Logger.warning(
+                'MBTilesDbCacheLayout: Provided directory does not exists. Instead, "%s" will be used as maps dir',
+                self.directory,
+            )
+            Path(self.directory).mkdir(parents=True, exist_ok=True)
 
     def _init_downloader(self):
         self.downloader = downloader = MBTilesDbCache(
@@ -320,8 +329,8 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
         )
         download_panel = BoxLayoutColored(
             orientation='vertical',
-            spacing=5,
-            size_hint=(0.92, 0.98),
+            spacing=1 if self._compact_layout else 5,
+            size_hint=(0.96, 0.98) if self._compact_layout else (0.92, 0.98),
         )
         download_panel_container.add_widget(download_panel)
 
@@ -351,7 +360,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
         container_layout = BoxLayoutShort(orientation='vertical')
 
         header_label_background = BoxLayoutShort(
-            padding=(10, 2),
+            padding=(8, 0) if self._compact_layout else (10, 2),
             background=HEADER_BACKGROUND,
         )
         container_layout.add_widget(header_label_background)
@@ -367,7 +376,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
             anchor_x='center',
             anchor_y='center',
             size_hint_y=None,
-            height=50,
+            height=56,
             padding=(0, 6, 0, 4),
         )
         self._init_select_center_button()
@@ -382,7 +391,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
         container_layout.add_widget(center_label)
 
         coords_layout = BoxLayoutShort(
-            spacing=5,
+            spacing=2 if self._compact_layout else 5,
             padding=(0, 6),
         )
 
@@ -447,6 +456,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
             min_value=self.min_side,
             max_value=self.max_side,
             value_setter=self.setter('side'),
+            buttons_overheight=12 if self._compact_layout else 24,
         )
         self.bind(downloading=lambda i, v: layout.disable(v))
 
@@ -466,7 +476,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
         container_layout = BoxLayoutShort(orientation='vertical')
 
         header_label_background = BoxLayoutShort(
-            padding=(10, 2),
+            padding=(8, 0) if self._compact_layout else (10, 2),
             background=HEADER_BACKGROUND,
         )
         container_layout.add_widget(header_label_background)
@@ -535,7 +545,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
         source_input.bind(text=lambda i, v: setattr(self, 'provider_url', v.strip()))
         trigger_refresh_cursor()
 
-        container_layout.add_widget(source_input_layout)
+        # container_layout.add_widget(source_input_layout)
 
         map_content_options = MapContent.values()
         if not self.gdal_installed:
@@ -546,7 +556,6 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
             options=map_content_options,
             title=_('Map content'),
         )
-        map_content_dropdown_layout.padding = (0, 10, 0, 0)
         container_layout.add_widget(map_content_dropdown_layout)
 
         return container_layout
@@ -563,7 +572,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
             item.text = _(item.text)
 
         for option in options:
-            btn = Button(text=option, size_hint_y=None, height=44)
+            btn = Button(text=option, size_hint_y=None, height=50)
             Clock.schedule_once(lambda *args, item=btn: _translate_item_text(item), 0.1)
             btn.bind(on_release=lambda *args, item=option: dropdown.select(item))
             dropdown.add_widget(btn)
@@ -584,7 +593,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
             valign='middle',
             halign='center',
             size_hint_y=None,
-            height=37,
+            height=44,
         )
         self.bind(**{field: lambda i, v: label.setter('text')(i, _(v))})
         Clock.schedule_once(lambda *args: _translate_item_text(label), 0.1)
@@ -626,7 +635,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
     def create_zoom_section(self):
         container_layout = BoxLayoutShort(orientation='vertical')
         header_label_background = BoxLayoutShort(
-            padding=(10, 2),
+            padding=(8, 0) if self._compact_layout else (10, 2),
             background=HEADER_BACKGROUND,
         )
         container_layout.add_widget(header_label_background)
@@ -647,7 +656,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
             color=(0.1, 0.1, 0.1, 1),
         )
         self.bind(zoom=lambda i, v: setattr(current_zoom_label, 'text', generate_current_zoom_label_text()))
-        container_layout.add_widget(Widget(size_hint_y=None, height=5))
+        container_layout.add_widget(Widget(size_hint_y=None, height=3 if self._compact_layout else 5))
         container_layout.add_widget(current_zoom_label)
 
         container_layout.add_widget(self._create_zoom_input_layout())
@@ -662,6 +671,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
             min_value=self.min_zoom,
             max_value=self.max_zoom,
             value_setter=self.setter('zoom_to'),
+            buttons_overheight=12 if self._compact_layout else 24,
         )
 
         def _disable_input(*_):
@@ -679,7 +689,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
         root_container = BoxLayoutShort(orientation='vertical')
 
         header_label_background = BoxLayoutShort(
-            padding=(10, 2),
+            padding=(8, 0) if self._compact_layout else (10, 2),
             background=HEADER_BACKGROUND,
         )
         root_container.add_widget(header_label_background)
@@ -691,7 +701,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
         )
         header_label_background.add_widget(header_label)
 
-        root_container.add_widget(Widget(size_hint_y=None, height=5))
+        root_container.add_widget(Widget(size_hint_y=None, height=3 if self._compact_layout else 5))
 
         dirselect_layout = TextInputTitledLayout(
             title=_('Directory'),
@@ -712,14 +722,11 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
 
         root_container.add_widget(dirselect_layout)
 
-        root_container.add_widget(Widget(size_hint_y=None, height=13))
+        root_container.add_widget(Widget(size_hint_y=None, height=8 if self._compact_layout else 13))
         filename_label = LabelValidatedAutoresized(text=_('Filename'))
         root_container.add_widget(filename_label)
 
-        file_basename_input_layout = RelativeLayout(
-            size_hint_y=None,
-            height=22,
-        )
+        file_basename_input_layout = RelativeLayout(size_hint_y=None)
         root_container.add_widget(file_basename_input_layout)
 
         filename_textinput = TextInputUnderlined(
@@ -730,6 +737,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
             pos_hint={"center_y": 0.5},
         )
         filename_textinput.bind(minimum_height=filename_textinput.setter('height'))
+        filename_textinput.bind(height=file_basename_input_layout.setter('height'))
         filename_textinput.bind(text=self.setter('file_basename'))
         self.bind(file_basename=lambda i, v: setattr(filename_textinput, 'text', v))
         self.bind(downloading=lambda i, v: setattr(filename_textinput, 'readonly', v))
@@ -777,7 +785,7 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
             size_hint_x=1,
         )
         self.bind(approximate_size_mb=lambda i, v: setattr(approximate_size_label, 'text', format_approximate_size(v)))
-        root_container.add_widget(Widget(size_hint_y=None, height=12))
+        root_container.add_widget(Widget(size_hint_y=None, height=8 if self._compact_layout else 12))
         root_container.add_widget(approximate_size_label)
 
         time_label = LabelAutoresized(size_hint_x=1)
@@ -800,13 +808,13 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
             downloading=trigger_update_time_label_text,
         )
         update_time_label_text()
-        root_container.add_widget(Widget(size_hint_y=None, height=5))
+        root_container.add_widget(Widget(size_hint_y=None, height=3 if self._compact_layout else 5))
         root_container.add_widget(time_label)
 
         return root_container
 
     def create_progress_section(self):
-        container = AnchorLayout(anchor_x='center', anchor_y='bottom', height=60, size_hint_y=None)
+        container = AnchorLayout(anchor_x='center', anchor_y='bottom', height=72, size_hint_y=None)
 
         self.download_button = download_button = ButtonColored(
             size_hint=(0.8, 1),

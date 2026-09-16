@@ -23,15 +23,21 @@ DEFAULT_MAX_ZOOM = 17
 DEFAULT_MAPS_DIRECTORY = 'map'
 DEFAULT_MAP_BASENAME = 'map'
 PNG_PATH = Path(__file__).resolve().with_name("png")
+KEYBOARDS_PATH = Path(__file__).resolve().with_name("keyboards")
+NUMERIC_KEYBOARD_LAYOUT = 'numeric.json'
 
 DOWNLOAD_PANEL_BACKGROUND = (0.95, 0.95, 0.95, 1)
 HEADER_BACKGROUND = (0.5, 0.5, 0.5, 1)
 HEADER_TEXT_COLOR = (1, 1, 1, 1)
 TEXT_COLOR = (0, 0, 0, 1)
 ERROR_COLOR = (1, 0, 0, 1)
-FONT_SIZE_MEDIUM = '16sp'
-FONT_SIZE_SMALL = '14sp'
+ACCENT_COLOR = (0.9, 0.1, 0.1, 1)
+FONT_SIZE_MEDIUM = '17sp'
+FONT_SIZE_SMALL = '16sp'
 
+COMPACT_HEIGHT_THRESHOLD = 820
+
+ICON_PNG = str(PNG_PATH / 'icon.png')
 DROPDOWN_DOWN_PNG = str(PNG_PATH / 'dropdown_down.png')
 DROPDOWN_UP_PNG = str(PNG_PATH / 'dropdown_up.png')
 INPUT_INCREASE_PNG = str(PNG_PATH / 'input_increase.png')
@@ -51,4 +57,3 @@ if not ELEVATION_CACHE_DIR.exists():
 
 if not MAPVIEW_CACHE_DIR.exists():
     MAPVIEW_CACHE_DIR.mkdir(parents=True)
-
