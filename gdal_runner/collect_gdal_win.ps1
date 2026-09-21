@@ -51,6 +51,10 @@ Copy-Item "$Root\apps\gdal\share\gdal" "$DataDir\gdal" -Recurse -ErrorAction Sto
 Write-Host "Copying PROJ data..."
 Copy-Item "$Root\share\proj" "$DataDir\proj" -Recurse -ErrorAction Stop
 
+Write-Host "Removing unused PROJ datum-shift grid files..."
+Get-ChildItem -Path "$DataDir\proj" -Recurse -Include "*.gsb", "*.gtx", "*.tif" |
+    Remove-Item -Force
+
 # ----------------------------
 # GDAL plugins
 # ----------------------------

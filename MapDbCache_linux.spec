@@ -9,6 +9,7 @@ python_site_packages = Path(sys.executable).parent.parent / "lib" / f"python{sys
 
 datas = [
     ('png', 'png'),
+    ('keyboards', 'keyboards'),
     ('locales', 'locales'),
     (str(python_site_packages / 'kivy_garden' / 'mapview' / 'icons'), 'kivy_garden/mapview/icons'),
     # Kivy fonts
@@ -23,15 +24,18 @@ hiddenimports = [
     'kivy_garden.mapview.providers',
 ]
 
+args_hook_path = Path('linux_runtime_args_hook.py')
+runtime_hooks = [str(args_hook_path)] if args_hook_path.exists() else []
+
 a = Analysis(
-    ['main.py'],
+    ['app.py'],
     pathex=[],
     binaries=[],
     datas=datas,
     hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},
-    runtime_hooks=[],
+    runtime_hooks=runtime_hooks,
     excludes=[],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
@@ -61,5 +65,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['icon.ico'],
+    icon=None, # See tools/desktop_shortcut.py for how the app gets a real icon.
 )

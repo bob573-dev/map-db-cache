@@ -14,6 +14,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
+linux_runtime_args_hook.py
 build/
 develop-eggs/
 dist/
@@ -186,10 +187,10 @@ cache
 cached_tiles
 map
 *.exe
+MapDbCache
 run_map_db_cache.sh
 
-!gdal_runner/gdal_linux/lib
-!gdal_runner/gdal_linux/lib/*.so
+gdal_runner/gdal_linux/
 
 mbtilesdbcache.ini
 copy.sh

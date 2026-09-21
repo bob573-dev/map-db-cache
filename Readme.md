@@ -32,7 +32,18 @@ python preview.py [path_to_file] (DEFAULT='map/map.mbtiles')
 ```
 
 ### Build executable
-script for building the executable for Linux is missing now
+Produces a single-file executable (`MapDbCache`) with no system GDAL dependency at
+runtime (see `docs/linux-build.md`). `collect_gdal_linux.sh` needs system GDAL +
+`patchelf` at collection time only — re-run it whenever GDAL is upgraded on the
+build machine.
+```
+cd gdal_runner
+./collect_gdal_linux.sh
+cd ..
+./build.sh [--silent] [--verbose] [--minimize] [--tablet]
+```
+Any flags passed to `build.sh` are baked into the resulting `MapDbCache` (always
+applied, without the end user passing them).
 
 ## Windows
 Contours on the elevation layer are not yet supported on Windows. Python + GDAL
