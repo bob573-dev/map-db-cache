@@ -547,13 +547,11 @@ class MBTilesDbCacheLayout(ColoredLayout, FloatLayout):
 
         # container_layout.add_widget(source_input_layout)
 
-        map_content_options = MapContent.values()
         if not self.gdal_installed:
-            map_content_options = [MapContent.ONLY_MAP]
             self.map_content = MapContent.ONLY_MAP
         map_content_dropdown_layout = self._create_dropdown_layout(
             field='map_content',
-            options=map_content_options,
+            options=MapContent.values(),
             title=_('Map content'),
         )
         container_layout.add_widget(map_content_dropdown_layout)
