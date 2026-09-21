@@ -18,11 +18,12 @@ from wakepy import keep
 from localization import LocalizedApp, _
 from MBTilesDbCacheLayout import MBTilesDbCacheLayout
 from consts import DEFAULT_MAPS_DIRECTORY, ICON_PNG
+from tools.desktop_shortcut import ensure_desktop_shortcut
 from tools.map_dir_finder import find_home_map_directory
 from tools.touch_calibration_postproc import TouchCalibrationPostproc
 from tools.touch_dedup_filter import TouchDedupFilter
 from tools.utils import str_to_list
-from utils import get_screen_size
+from utils import get_screen_size, is_win_platform
 
 
 class MBTilesDbCacheApp(LocalizedApp):
@@ -181,4 +182,6 @@ if __name__ == '__main__':
 
     if hasattr(sys, '_MEIPASS'):
         resource_add_path(os.path.join(sys._MEIPASS))
+        if not is_win_platform():
+            ensure_desktop_shortcut()
     MBTilesDbCacheApp(lang=os.getenv('MAP_DB_CACHE_LANG', default='ua')).run()
