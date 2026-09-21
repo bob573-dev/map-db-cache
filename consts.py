@@ -22,6 +22,33 @@ DEFAULT_MIN_ZOOM = 1
 DEFAULT_MAX_ZOOM = 17
 DEFAULT_MAPS_DIRECTORY = 'map'
 DEFAULT_MAP_BASENAME = 'map'
+
+MAP_DIRECTORY_NAMES = [
+    'maps',
+    'map',
+    'atlas',
+    'atlases',
+    'geo',
+    'geodata',
+    'geospatial',
+    'gis',
+    'cartography',
+    'topographic maps',
+    'topographic map',
+    'topo map',
+    'geographical maps',
+    'geographical map',
+    'geographic maps',
+    'geographic map',
+    'terrain',
+    'elevation',
+    'mbtiles',
+    'tiles',
+    'map tiles',
+    'offline maps',
+    'map cache',
+    'map data',
+]
 PNG_PATH = Path(__file__).resolve().with_name("png")
 KEYBOARDS_PATH = Path(__file__).resolve().with_name("keyboards")
 NUMERIC_KEYBOARD_LAYOUT = 'numeric.json'

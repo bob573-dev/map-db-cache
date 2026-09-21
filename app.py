@@ -18,6 +18,7 @@ from wakepy import keep
 from localization import LocalizedApp, _
 from MBTilesDbCacheLayout import MBTilesDbCacheLayout
 from consts import DEFAULT_MAPS_DIRECTORY, ICON_PNG
+from tools.map_dir_finder import find_home_map_directory
 from tools.touch_calibration_postproc import TouchCalibrationPostproc
 from tools.touch_dedup_filter import TouchDedupFilter
 from tools.utils import str_to_list
@@ -37,6 +38,13 @@ class MBTilesDbCacheApp(LocalizedApp):
     def on_stop(self):
         self.main_layout.downloader.clear_cache()
 
+    def _resolve_map_directory(self) -> str:
+        map_dir_env = os.getenv('MAP_DIR')
+        if map_dir_env:
+            return map_dir_env
+        last_map_directory = self.config.get('storage', 'last_map_directory')
+        return last_map_directory or find_home_map_directory() or DEFAULT_MAPS_DIRECTORY
+
     def build(self):
         self.icon = ICON_PNG
         Window.bind(on_request_close=self.on_request_close)
@@ -46,9 +54,7 @@ class MBTilesDbCacheApp(LocalizedApp):
         self._touch_dedup_filter = None
         self._update_touch_filter()
 
-        last_map_directory = self.config.get('storage', 'last_map_directory')
-        fallback_directory = last_map_directory or DEFAULT_MAPS_DIRECTORY
-        self.main_layout = MBTilesDbCacheLayout(directory=os.getenv('MAP_DIR', fallback_directory))
+        self.main_layout = MBTilesDbCacheLayout(directory=self._resolve_map_directory())
         self.main_layout.downloader.bind(on_success=self._remember_last_directory)
         return self.main_layout
 
