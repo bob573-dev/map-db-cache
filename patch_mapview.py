@@ -99,16 +99,21 @@ PATCHES = {
 }
 
 
+PATCH_MARKER = "# patched by patch_mapview.py -- do not run this again on this file\n"
+
+
 def replace(filename, patches_list: list[tuple[str, str]]):
     with open(filename, "r", encoding="utf-8") as f:
-        lines = f.readlines()
+        content = f.read()
+
+    if content.startswith(PATCH_MARKER):
+        return
+
+    for _old, _new in patches_list:
+        content = content.replace(_old, _new)
 
     with open(filename, "w", encoding="utf-8") as f:
-        for line in lines:
-            new_line = line
-            for _old, _new in patches_list:
-                new_line = new_line.replace(_old, _new)
-            f.write(new_line)
+        f.write(PATCH_MARKER + content)
 
 
 if __name__ == '__main__':

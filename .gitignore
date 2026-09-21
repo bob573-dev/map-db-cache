@@ -186,9 +186,12 @@ cache
 cached_tiles
 map
 *.exe
+run_map_db_cache.sh
 
 !gdal_runner/gdal_linux/lib
 !gdal_runner/gdal_linux/lib/*.so
 
 mbtilesdbcache.ini
 copy.sh
+archive.sh
+production/
