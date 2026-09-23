@@ -147,7 +147,7 @@ class FileChooserPopup(Popup):
         self.create_folder_btn = Button(
             text=_('Create folder'),
             size_hint_x=None,
-            width=130,
+            width=150,
             on_release=self._create_folder_request,
         )
         self.new_folder_layout.add_widget(self.create_folder_btn)
