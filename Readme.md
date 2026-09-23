@@ -46,9 +46,8 @@ Any flags passed to `build.sh` are baked into the resulting `MapDbCache` (always
 applied, without the end user passing them).
 
 ## Windows
-Contours on the elevation layer are not yet supported on Windows. Python + GDAL
-(via OSGeo4W) are already vendored in the project — run all commands below from
-the project root directory.
+Python + GDAL (via OSGeo4W) are already vendored in the project — run all commands
+below from the project root directory.
 ```
 set PYTHON_EXE=%CD%\gdal_runner\gdal_win\OSGeo4W\bin\python.exe
 set PYTHONHOME=%CD%\gdal_runner\gdal_win\Python312

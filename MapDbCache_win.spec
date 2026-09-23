@@ -39,6 +39,7 @@ hiddenimports = [
     'osgeo_utils',
     'osgeo_utils.gdal2tiles',
     'osgeo_utils.gdal_calc',
+    'osgeo_utils.gdal_merge',
     'osgeo_utils.auxiliary',
 ]
 
